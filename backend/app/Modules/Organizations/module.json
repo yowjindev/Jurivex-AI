@@ -1,0 +1,12 @@
+{
+    "name": "Organizations",
+    "alias": "organizations",
+    "description": "Organizations module — org profile, members, invitations",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "App\\Modules\\Organizations\\Providers\\OrganizationsServiceProvider"
+    ],
+    "aliases": {},
+    "files": []
+}

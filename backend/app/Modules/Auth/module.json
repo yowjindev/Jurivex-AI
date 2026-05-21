@@ -1,0 +1,12 @@
+{
+    "name": "Auth",
+    "alias": "auth",
+    "description": "Authentication module — register, login, logout, me",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "App\\Modules\\Auth\\Providers\\AuthServiceProvider"
+    ],
+    "aliases": {},
+    "files": []
+}
