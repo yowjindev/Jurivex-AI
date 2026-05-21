@@ -1,0 +1,42 @@
+# Environment
+.env
+backend/.env
+backend/.env.testing
+frontend/.env*.local
+
+# Local-only project files (never push — public repo)
+docs/diary/
+docs/superpowers/plans/
+.claude/
+
+# Superpowers plugin artifacts
+.superpowers/
+
+# Docker volumes
+postgres_data/
+minio_data/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+
+# Logs
+npm-debug.log*
+yarn-error.log*
+
+# Next.js
+frontend/.next/
+frontend/node_modules/
+
+# Laravel
+backend/vendor/
+backend/bootstrap/cache/*.php
+backend/.phpunit.result.cache
+backend/storage/logs/*.log
+backend/storage/framework/cache/data/*
+backend/storage/framework/sessions/*
+backend/storage/framework/views/*
