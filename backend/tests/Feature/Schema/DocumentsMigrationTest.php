@@ -32,4 +32,15 @@ class DocumentsMigrationTest extends TestCase
         $this->assertEquals('uuid', Schema::getColumnType('document_analyses', 'id'));
         $this->assertEquals('uuid', Schema::getColumnType('document_analyses', 'document_id'));
     }
+
+    public function test_compliance_flags_table_has_expected_columns(): void
+    {
+        $this->assertTrue(Schema::hasTable('compliance_flags'));
+        $this->assertTrue(Schema::hasColumns('compliance_flags', [
+            'id', 'organization_id', 'document_id', 'type', 'severity',
+            'title', 'description', 'due_date', 'is_resolved', 'created_at', 'updated_at',
+        ]));
+        $this->assertEquals('uuid', Schema::getColumnType('compliance_flags', 'id'));
+        $this->assertEquals('uuid', Schema::getColumnType('compliance_flags', 'organization_id'));
+    }
 }
