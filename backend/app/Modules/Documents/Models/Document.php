@@ -1,19 +1,24 @@
 <?php
-
 namespace App\Modules\Documents\Models;
 
+use App\Models\User;
 use App\Modules\Organizations\Models\Organization;
 use Database\Factories\DocumentFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Document extends Model
 {
-    /** @use HasFactory<DocumentFactory> */
     use HasFactory, HasUuids, SoftDeletes;
+
+    const STATUS_PENDING    = 'pending';
+    const STATUS_PROCESSING = 'processing';
+    const STATUS_ANALYZED   = 'analyzed';
+    const STATUS_FAILED     = 'failed';
 
     protected $fillable = [
         'organization_id', 'uploaded_by', 'title', 'original_filename',
@@ -35,7 +40,12 @@ class Document extends Model
 
     public function uploader(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\User::class, 'uploaded_by');
+        return $this->belongsTo(User::class, 'uploaded_by');
+    }
+
+    public function analysis(): HasOne
+    {
+        return $this->hasOne(DocumentAnalysis::class);
     }
 
     protected static function newFactory(): DocumentFactory
