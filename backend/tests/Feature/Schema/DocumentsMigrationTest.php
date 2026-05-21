@@ -17,6 +17,9 @@ class DocumentsMigrationTest extends TestCase
             'original_filename', 'mime_type', 'file_size', 's3_path',
             'status', 'category', 'tags', 'created_at', 'updated_at', 'deleted_at',
         ]));
+        $this->assertEquals('uuid', Schema::getColumnType('documents', 'id'));
+        $this->assertEquals('uuid', Schema::getColumnType('documents', 'organization_id'));
+        $this->assertEquals('uuid', Schema::getColumnType('documents', 'uploaded_by'));
     }
 
     public function test_document_analyses_table_has_expected_columns(): void
@@ -26,5 +29,7 @@ class DocumentsMigrationTest extends TestCase
             'id', 'document_id', 'summary', 'key_points',
             'risk_score', 'ai_model', 'analyzed_at', 'created_at', 'updated_at',
         ]));
+        $this->assertEquals('uuid', Schema::getColumnType('document_analyses', 'id'));
+        $this->assertEquals('uuid', Schema::getColumnType('document_analyses', 'document_id'));
     }
 }
