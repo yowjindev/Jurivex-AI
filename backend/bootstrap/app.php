@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         App\Modules\Auth\Providers\AuthServiceProvider::class,
         App\Modules\Organizations\Providers\OrganizationsServiceProvider::class,
         App\Modules\Documents\Providers\DocumentsServiceProvider::class,
+        App\Modules\Compliance\Providers\ComplianceServiceProvider::class,
     ])
     ->withExceptions(function (Exceptions $exceptions): void {
         //
