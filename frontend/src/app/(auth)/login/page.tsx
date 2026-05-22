@@ -20,7 +20,6 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      await api.get('/sanctum/csrf-cookie')
       await api.post('/api/v1/auth/login', { email, password })
       document.cookie = 'auth_check=1; path=/; SameSite=Lax'
       router.push('/dashboard')

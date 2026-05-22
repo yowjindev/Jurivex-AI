@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { LogOut, User } from 'lucide-react'
 import { useAuthStore } from '@/stores/authStore'
-import api from '@/lib/api/client'
+import api, { resetCsrf } from '@/lib/api/client'
 
 export function Header() {
   const user = useAuthStore((s) => s.user)
@@ -14,6 +14,7 @@ export function Header() {
     try {
       await api.delete('/api/v1/auth/logout')
     } finally {
+      resetCsrf()
       setUser(null)
       document.cookie = 'auth_check=; Max-Age=0; path=/'
       router.push('/login')

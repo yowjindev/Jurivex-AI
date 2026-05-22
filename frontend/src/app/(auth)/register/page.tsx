@@ -38,7 +38,6 @@ export default function RegisterPage() {
     setLoading(true)
 
     try {
-      await api.get('/sanctum/csrf-cookie')
       await api.post('/api/v1/auth/register', form)
       document.cookie = 'auth_check=1; path=/; SameSite=Lax'
       router.push('/dashboard')

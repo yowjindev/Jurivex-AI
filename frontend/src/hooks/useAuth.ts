@@ -4,7 +4,7 @@ import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/authStore'
-import api from '@/lib/api/client'
+import api, { resetCsrf } from '@/lib/api/client'
 import type { ApiResponse, User } from '@/types'
 
 export function useAuth() {
@@ -25,6 +25,7 @@ export function useAuth() {
 
   useEffect(() => {
     if (error) {
+      resetCsrf()
       document.cookie = 'auth_check=; Max-Age=0; path=/'
       router.push('/login')
     }

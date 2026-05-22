@@ -22,4 +22,8 @@ api.interceptors.request.use(async (config) => {
   return config
 })
 
+export function resetCsrf(): void {
+  csrfFetched = false
+}
+
 export default api
