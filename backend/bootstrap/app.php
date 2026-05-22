@@ -19,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
         App\Modules\Organizations\Providers\OrganizationsServiceProvider::class,
         App\Modules\Documents\Providers\DocumentsServiceProvider::class,
         App\Modules\Compliance\Providers\ComplianceServiceProvider::class,
+        App\Modules\AI\Providers\AIServiceProvider::class,
     ])
     ->withExceptions(function (Exceptions $exceptions): void {
         //
