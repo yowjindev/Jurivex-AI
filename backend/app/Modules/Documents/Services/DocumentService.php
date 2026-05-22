@@ -5,6 +5,7 @@ use App\Models\User;
 use App\Modules\Auth\Models\AuditLog;
 use App\Modules\Documents\DTOs\UpdateDocumentDTO;
 use App\Modules\Documents\DTOs\UploadDocumentDTO;
+use App\Modules\Documents\Events\DocumentUploaded;
 use App\Modules\Documents\Jobs\ProcessDocumentJob;
 use App\Modules\Documents\Models\Document;
 use App\Modules\Documents\Repositories\Contracts\IDocumentRepository;
@@ -76,6 +77,7 @@ class DocumentService
         ]);
 
         ProcessDocumentJob::dispatch($document);
+        DocumentUploaded::dispatch($document);
 
         return $document;
     }

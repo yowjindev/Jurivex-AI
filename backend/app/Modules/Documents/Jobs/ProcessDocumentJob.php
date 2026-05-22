@@ -1,6 +1,9 @@
 <?php
+
 namespace App\Modules\Documents\Jobs;
 
+use App\Modules\Documents\Events\DocumentAnalysisCompleted;
+use App\Modules\Documents\Events\DocumentProcessingStarted;
 use App\Modules\Documents\Models\Document;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -17,7 +20,10 @@ class ProcessDocumentJob implements ShouldQueue
     public function handle(): void
     {
         $this->document->update(['status' => Document::STATUS_PROCESSING]);
-        // Phase 2: chain OCRJob → AIAnalysisJob → EmbeddingJob → RiskDetectionJob
+        DocumentProcessingStarted::dispatch($this->document);
+
+        // Phase 2: replace these two lines with DocumentAnalysisPipeline::dispatch()
         $this->document->update(['status' => Document::STATUS_ANALYZED]);
+        DocumentAnalysisCompleted::dispatch($this->document);
     }
 }
