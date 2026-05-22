@@ -83,7 +83,22 @@ class DocumentStatusManagerTest extends TestCase
         $document = Document::factory()->create(['status' => Document::STATUS_ANALYZED]);
 
         $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage("Cannot transition document from 'analyzed' to 'processing'");
 
         $this->manager->transition($document, Document::STATUS_PROCESSING);
+    }
+
+    public function test_can_transition_returns_true_for_valid_transition(): void
+    {
+        $document = Document::factory()->create(['status' => Document::STATUS_PENDING]);
+
+        $this->assertTrue($this->manager->canTransition($document, Document::STATUS_PROCESSING));
+    }
+
+    public function test_can_transition_returns_false_for_invalid_transition(): void
+    {
+        $document = Document::factory()->create(['status' => Document::STATUS_PENDING]);
+
+        $this->assertFalse($this->manager->canTransition($document, Document::STATUS_ANALYZED));
     }
 }
