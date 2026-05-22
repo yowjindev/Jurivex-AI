@@ -19,7 +19,7 @@ export default function CompliancePage() {
   const user = useAuthStore((s) => s.user)
   const canResolve = user?.roles.includes('admin') || user?.roles.includes('manager')
 
-  const { data, isPending } = useQuery({
+  const { data, isPending, isError } = useQuery({
     queryKey: ['compliance', 'flags'],
     queryFn: () => listFlags(),
   })
@@ -49,7 +49,14 @@ export default function CompliancePage() {
         </div>
       )}
 
-      {!isPending && flags.length === 0 && (
+      {isError && (
+        <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-6 text-center">
+          <p className="text-sm text-destructive font-medium">Failed to load compliance flags.</p>
+          <p className="text-xs text-muted-foreground mt-1">Check your connection and refresh the page.</p>
+        </div>
+      )}
+
+      {!isPending && !isError && flags.length === 0 && (
         <div className="rounded-xl border border-border bg-card p-12 text-center">
           <ShieldAlert size={32} className="mx-auto text-muted-foreground mb-3" />
           <p className="text-foreground font-medium mb-1">No compliance flags</p>
@@ -59,7 +66,7 @@ export default function CompliancePage() {
         </div>
       )}
 
-      {!isPending && flags.length > 0 && (
+      {!isPending && !isError && flags.length > 0 && (
         <div className="space-y-3">
           {flags.map((flag) => (
             <div
@@ -91,7 +98,7 @@ export default function CompliancePage() {
 
                 {canResolve && !flag.is_resolved && (
                   <button
-                    onClick={() => resolve.mutate(flag.id)}
+                    onClick={() => { if (resolve.isPending) return; resolve.mutate(flag.id) }}
                     disabled={resolve.isPending}
                     className="shrink-0 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent transition-colors disabled:opacity-50"
                   >
