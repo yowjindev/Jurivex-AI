@@ -16,3 +16,4 @@ Route::prefix('v1')->group(function () {
 require app_path('Modules/Auth/Routes/api.php');
 require app_path('Modules/Organizations/Routes/api.php');
 require app_path('Modules/Documents/Routes/api.php');
+require app_path('Modules/Compliance/Routes/api.php');
