@@ -75,6 +75,7 @@ class DocumentService
             'auditable_type'  => 'document',
             'auditable_id'    => $document->id,
             'new_values'      => ['title' => $document->title, 'filename' => $document->original_filename],
+            'metadata'        => ['mime_type' => $document->mime_type, 'file_size' => $document->file_size],
         ]);
 
         DocumentUploaded::dispatch($document);
@@ -108,6 +109,7 @@ class DocumentService
             'auditable_type'  => 'document',
             'auditable_id'    => $document->id,
             'new_values'      => ['title' => $document->title],
+            'metadata'        => ['file_size' => $document->file_size, 'original_filename' => $document->original_filename],
         ]);
 
         $this->documentRepository->delete($document);

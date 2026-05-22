@@ -32,6 +32,7 @@ class ComplianceService
             'auditable_type'  => 'compliance_flag',
             'auditable_id'    => $flag->id,
             'new_values'      => ['title' => $flag->title],
+            'metadata'        => ['severity' => $flag->severity, 'type' => $flag->type],
         ]);
 
         return $resolved;

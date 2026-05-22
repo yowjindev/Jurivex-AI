@@ -19,6 +19,7 @@ class AuditLog extends Model
         'auditable_id',
         'old_values',
         'new_values',
+        'metadata',
     ];
 
     protected function casts(): array
@@ -26,6 +27,7 @@ class AuditLog extends Model
         return [
             'old_values' => 'array',
             'new_values' => 'array',
+            'metadata'   => 'array',
         ];
     }
 }
