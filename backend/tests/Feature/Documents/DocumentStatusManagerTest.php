@@ -3,10 +3,10 @@
 namespace Tests\Feature\Documents;
 
 use App\Modules\Documents\Models\Document;
+use App\Exceptions\Documents\InvalidDocumentTransitionException;
 use App\Modules\Documents\Services\DocumentStatusManager;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use RuntimeException;
 use Tests\TestCase;
 
 class DocumentStatusManagerTest extends TestCase
@@ -62,7 +62,7 @@ class DocumentStatusManagerTest extends TestCase
     {
         $document = Document::factory()->create(['status' => Document::STATUS_PENDING]);
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(InvalidDocumentTransitionException::class);
         $this->expectExceptionMessage("Cannot transition document from 'pending' to 'analyzed'");
 
         $this->manager->transition($document, Document::STATUS_ANALYZED);
@@ -72,7 +72,7 @@ class DocumentStatusManagerTest extends TestCase
     {
         $document = Document::factory()->create(['status' => Document::STATUS_ANALYZED]);
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(InvalidDocumentTransitionException::class);
         $this->expectExceptionMessage("Cannot transition document from 'analyzed' to 'pending'");
 
         $this->manager->transition($document, Document::STATUS_PENDING);
@@ -82,7 +82,7 @@ class DocumentStatusManagerTest extends TestCase
     {
         $document = Document::factory()->create(['status' => Document::STATUS_ANALYZED]);
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(InvalidDocumentTransitionException::class);
         $this->expectExceptionMessage("Cannot transition document from 'analyzed' to 'processing'");
 
         $this->manager->transition($document, Document::STATUS_PROCESSING);

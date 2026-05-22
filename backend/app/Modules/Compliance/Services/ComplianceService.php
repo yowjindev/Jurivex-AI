@@ -2,6 +2,7 @@
 
 namespace App\Modules\Compliance\Services;
 
+use App\Exceptions\Compliance\ComplianceFlagNotFoundException;
 use App\Models\User;
 use App\Modules\Auth\Models\AuditLog;
 use App\Modules\Compliance\Models\ComplianceFlag;
@@ -21,7 +22,9 @@ class ComplianceService
     {
         $flag = $this->repository->findById($id, $user->organization_id);
 
-        abort_if($flag === null, 404, 'Compliance flag not found.');
+        if ($flag === null) {
+            throw new ComplianceFlagNotFoundException();
+        }
 
         $resolved = $this->repository->resolve($flag);
 

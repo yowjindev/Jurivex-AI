@@ -1,8 +1,10 @@
 <?php
 
+use App\Exceptions\AppException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -22,5 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
         App\Modules\AI\Providers\AIServiceProvider::class,
     ])
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->render(function (AppException $e, Request $request) {
+            return response()->json($e->toArray(), $e->statusCode);
+        });
     })->create();

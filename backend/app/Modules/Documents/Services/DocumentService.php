@@ -2,6 +2,8 @@
 
 namespace App\Modules\Documents\Services;
 
+use App\Exceptions\Documents\DocumentNotFoundException;
+use App\Exceptions\ForbiddenException;
 use App\Models\User;
 use App\Modules\Auth\Models\AuditLog;
 use App\Modules\Documents\DTOs\UpdateDocumentDTO;
@@ -28,10 +30,12 @@ class DocumentService
     {
         $document = $this->documentRepository->findById($id, $user->organization_id);
 
-        abort_if($document === null, 404, 'Document not found.');
+        if ($document === null) {
+            throw new DocumentNotFoundException();
+        }
 
         if ($user->hasRole('staff') && $document->uploaded_by !== $user->id) {
-            abort(403, 'Access denied.');
+            throw new ForbiddenException('Access denied.');
         }
 
         return $document;
@@ -96,11 +100,9 @@ class DocumentService
 
     public function delete(Document $document, User $user): void
     {
-        abort_if(
-            ! $user->hasAnyRole(['admin', 'manager']),
-            403,
-            'Only admins and managers can delete documents.'
-        );
+        if (! $user->hasAnyRole(['admin', 'manager'])) {
+            throw new ForbiddenException('Only admins and managers can delete documents.');
+        }
 
         AuditLog::create([
             'organization_id' => $user->organization_id,

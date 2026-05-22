@@ -2,8 +2,8 @@
 
 namespace App\Modules\Documents\Services;
 
+use App\Exceptions\Documents\InvalidDocumentTransitionException;
 use App\Modules\Documents\Models\Document;
-use RuntimeException;
 
 class DocumentStatusManager
 {
@@ -20,9 +20,7 @@ class DocumentStatusManager
         $allowed       = self::VALID_TRANSITIONS[$currentStatus] ?? [];
 
         if (! in_array($newStatus, $allowed, true)) {
-            throw new RuntimeException(
-                "Cannot transition document from '{$currentStatus}' to '{$newStatus}'."
-            );
+            throw new InvalidDocumentTransitionException($currentStatus, $newStatus);
         }
 
         $document->update(['status' => $newStatus]);
