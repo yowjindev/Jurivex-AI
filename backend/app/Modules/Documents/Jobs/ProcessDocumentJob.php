@@ -5,6 +5,7 @@ namespace App\Modules\Documents\Jobs;
 use App\Modules\Documents\Events\DocumentAnalysisCompleted;
 use App\Modules\Documents\Events\DocumentProcessingStarted;
 use App\Modules\Documents\Models\Document;
+use App\Modules\Documents\Services\DocumentStatusManager;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -17,13 +18,13 @@ class ProcessDocumentJob implements ShouldQueue
 
     public function __construct(public Document $document) {}
 
-    public function handle(): void
+    public function handle(DocumentStatusManager $statusManager): void
     {
-        $this->document->update(['status' => Document::STATUS_PROCESSING]);
+        $statusManager->transition($this->document, Document::STATUS_PROCESSING);
         DocumentProcessingStarted::dispatch($this->document);
 
         // Phase 2: replace these two lines with DocumentAnalysisPipeline::dispatch()
-        $this->document->update(['status' => Document::STATUS_ANALYZED]);
+        $statusManager->transition($this->document, Document::STATUS_ANALYZED);
         DocumentAnalysisCompleted::dispatch($this->document);
     }
 }
