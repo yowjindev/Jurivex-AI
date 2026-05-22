@@ -4,7 +4,7 @@ import type { NextRequest } from 'next/server'
 const PROTECTED_PREFIXES = ['/dashboard', '/documents', '/compliance', '/organization', '/settings']
 const AUTH_ONLY_PREFIXES = ['/login', '/register']
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const isAuthenticated = request.cookies.has('auth_check')
   const { pathname } = request.nextUrl
 
