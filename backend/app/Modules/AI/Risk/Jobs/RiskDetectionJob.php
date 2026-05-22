@@ -1,5 +1,6 @@
 <?php
-namespace App\Modules\AI\Jobs;
+
+namespace App\Modules\AI\Risk\Jobs;
 
 use App\Modules\Documents\Models\Document;
 use Illuminate\Bus\Queueable;
@@ -8,17 +9,14 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
-class NotificationJob implements ShouldQueue
+class RiskDetectionJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public function __construct(
-        public Document $document,
-        public string   $event,
-    ) {}
+    public function __construct(public Document $document) {}
 
     public function handle(): void
     {
-        // Phase 2: send email/push notifications when analysis completes
+        // Phase 2: detect compliance risks and create ComplianceFlag records
     }
 }

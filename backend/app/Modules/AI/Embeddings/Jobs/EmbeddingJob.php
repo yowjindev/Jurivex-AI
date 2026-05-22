@@ -1,5 +1,6 @@
 <?php
-namespace App\Modules\AI\Jobs;
+
+namespace App\Modules\AI\Embeddings\Jobs;
 
 use App\Modules\Documents\Models\Document;
 use Illuminate\Bus\Queueable;
@@ -8,7 +9,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
-class RiskDetectionJob implements ShouldQueue
+class EmbeddingJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -16,6 +17,6 @@ class RiskDetectionJob implements ShouldQueue
 
     public function handle(): void
     {
-        // Phase 2: detect compliance risks and create ComplianceFlag records
+        // Phase 2: generate vector embedding and store in pgvector column
     }
 }

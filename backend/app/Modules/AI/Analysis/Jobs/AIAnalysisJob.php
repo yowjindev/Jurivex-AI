@@ -1,5 +1,6 @@
 <?php
-namespace App\Modules\AI\Jobs;
+
+namespace App\Modules\AI\Analysis\Jobs;
 
 use App\Modules\Documents\Models\Document;
 use Illuminate\Bus\Queueable;
