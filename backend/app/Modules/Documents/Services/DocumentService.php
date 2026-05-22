@@ -121,7 +121,7 @@ class DocumentService
     {
         try {
             return Storage::disk('s3')->temporaryUrl($document->s3_path, now()->addMinutes(60));
-        } catch (\RuntimeException) {
+        } catch (\League\Flysystem\UnableToGenerateTemporaryUrl) {
             return null;
         }
     }
