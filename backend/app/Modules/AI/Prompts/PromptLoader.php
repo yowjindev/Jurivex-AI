@@ -23,7 +23,13 @@ class PromptLoader implements PromptLoaderContract
         $template = $this->templates[$name];
 
         foreach ($variables as $key => $value) {
-            $template = str_replace("{{$key}}", $value, $template);
+            $template = str_replace("{{$key}}", (string) $value, $template);
+        }
+
+        if (preg_match('/\{[a-zA-Z_][a-zA-Z0-9_]*\}/', $template, $matches)) {
+            throw new \UnderflowException(
+                "Prompt template '{$name}' has unresolved placeholder: {$matches[0]}."
+            );
         }
 
         return $template;

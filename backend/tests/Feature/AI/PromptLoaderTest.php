@@ -25,7 +25,7 @@ class PromptLoaderTest extends TestCase
         $this->assertStringContainsString('Analyze', $result);
     }
 
-    public function test_substitutes_multiple_variables(): void
+    public function test_substitutes_single_variable(): void
     {
         $result = $this->loader->load('document.summarize', ['content' => 'hello world']);
 
@@ -46,5 +46,21 @@ class PromptLoaderTest extends TestCase
         $loader = $this->app->make(PromptLoaderContract::class);
 
         $this->assertInstanceOf(PromptLoader::class, $loader);
+    }
+
+    public function test_throws_for_missing_placeholder(): void
+    {
+        $this->expectException(\UnderflowException::class);
+        $this->expectExceptionMessage('has unresolved placeholder');
+
+        $this->loader->load('document.analyze'); // missing 'content' variable
+    }
+
+    public function test_loads_extract_risks_template(): void
+    {
+        $result = $this->loader->load('document.extract_risks', ['content' => 'sample doc']);
+
+        $this->assertStringContainsString('sample doc', $result);
+        $this->assertStringNotContainsString('{content}', $result);
     }
 }
