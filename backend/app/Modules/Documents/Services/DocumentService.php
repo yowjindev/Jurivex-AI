@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Modules\Documents\Services;
 
 use App\Models\User;
@@ -76,8 +77,8 @@ class DocumentService
             'new_values'      => ['title' => $document->title, 'filename' => $document->original_filename],
         ]);
 
-        ProcessDocumentJob::dispatch($document);
         DocumentUploaded::dispatch($document);
+        ProcessDocumentJob::dispatch($document);
 
         return $document;
     }
