@@ -121,7 +121,7 @@ export default function RegisterPage() {
               <span className="font-medium text-foreground capitalize">{preview.role}</span>
               <button
                 type="button"
-                onClick={() => { setStep('code'); setPreview(null); setCodeError('') }}
+                onClick={() => { setStep('code'); setPreview(null); setCodeError(''); setForm({ name: '', email: '', password: '', password_confirmation: '' }); setErrors({}) }}
                 className="ml-3 text-xs text-muted-foreground underline hover:text-foreground"
               >
                 Change
