@@ -1,169 +1,150 @@
-<div align="center">
-
 # Jurivex AI
 
-**AI-Powered Legal & Compliance Intelligence Platform**
+**AI-powered legal document compliance platform.**
 
-[![Laravel](https://img.shields.io/badge/Laravel-13-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)](https://laravel.com)
-[![Next.js](https://img.shields.io/badge/Next.js-16-000000?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org)
-[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com)
-
-*Analyze legal documents, detect compliance risks, and surface actionable intelligence —*
-*built for accounting firms, HR agencies, construction companies, logistics operators, and SMEs.*
-
-</div>
-
----
-
-> **Disclaimer:** Jurivex AI does not provide legal advice and should not replace licensed legal professionals. All analysis is for informational purposes only.
-
----
-
-## What is Jurivex AI?
-
-Legal and compliance work is expensive, slow, and buried in documents most people never fully read. Jurivex AI is an operations intelligence platform that changes that — turning dense contracts, policies, and regulatory filings into plain-English summaries, risk signals, and actionable dashboards.
-
-It is not a legal practice tool. It is a **business intelligence layer** on top of your legal documents, designed for the teams that live with compliance every day but can't afford a lawyer in every meeting.
-
-**Core capabilities:**
-
-- **Document Intelligence** — Upload contracts, policies, and regulatory documents. Get plain-English summaries, extracted key clauses, and risk scores — without reading 80 pages.
-- **Compliance Monitoring** — Automatically surface deadlines, obligations, and gaps across your document library. Get alerted before things slip.
-- **Risk Detection** — AI flags high-risk clauses, missing protections, and regulatory exposure — categorized by severity so teams know where to focus.
-- **Executive Dashboards** — Compliance status at a glance. Designed for people who need answers, not documents.
-- **Audit Trail** — Every action logged, immutable, and traceable. Built for regulated industries from day one.
-
----
-
-## Who It's For
-
-Jurivex AI is designed for compliance-heavy businesses that operate without a full legal team on retainer:
-
-| Industry | Pain Point |
-|---|---|
-| Accounting Firms | Client contracts, regulatory filings, engagement letters |
-| HR Agencies | Employment contracts, labor compliance, policy reviews |
-| Mining & Construction | Safety regulations, permits, subcontractor agreements |
-| Logistics | Carrier agreements, customs compliance, cross-border regulations |
-| SMEs | Vendor contracts, NDAs, lease agreements, regulatory requirements |
-
----
-
-## Tech Stack
-
-### Backend
-| | |
-|---|---|
-| Framework | Laravel 13 (PHP 8.4) |
-| Authentication | Laravel Sanctum — SPA mode, httpOnly cookies |
-| Architecture | Domain-driven modules via nwidart/laravel-modules |
-| Permissions | spatie/laravel-permission — role-based per organization |
-| Queue & Jobs | Laravel Horizon on Redis |
-| Database | PostgreSQL 16 with pgvector for semantic search |
-| File Storage | AWS S3 (production) · MinIO (local) |
-
-### Frontend
-| | |
-|---|---|
-| Framework | Next.js 16 — App Router |
-| Language | TypeScript (strict mode) |
-| UI | TailwindCSS + shadcn/ui |
-| State | Zustand · TanStack Query |
-
-### Infrastructure
-| | |
-|---|---|
-| Reverse Proxy | Nginx |
-| Containerization | Docker Compose |
-| Vector Search | pgvector (PostgreSQL extension) |
-| Queue Backend | Redis |
+Jurivex AI enables law firms and compliance teams to upload legal documents, automatically extract compliance risks, and manage obligations — all backed by an AI pipeline built on modern LLMs.
 
 ---
 
 ## Architecture
 
-Jurivex AI is a monorepo with a clean separation between the API and the frontend. The backend follows a domain-driven module structure — each feature domain (Auth, Organizations, Documents, Compliance, AI) lives as a self-contained module with its own controllers, services, repositories, jobs, and migrations.
+```
+┌─────────────────────────────────────────────────────────┐
+│                     Next.js 16 Frontend                  │
+│  App Router · TanStack Query · Zustand · Tailwind CSS v4 │
+└────────────────────┬────────────────────────────────────┘
+                     │ HTTPS + Sanctum SPA auth
+┌────────────────────▼────────────────────────────────────┐
+│                   Laravel 11 Backend                     │
+│     Modular Monolith · Repository Pattern · Queue Jobs   │
+│                                                          │
+│  Auth · Documents · Compliance · Organizations · AI      │
+└─────────┬──────────────────────────┬────────────────────┘
+          │                          │
+┌─────────▼──────────┐   ┌───────────▼────────────────────┐
+│   PostgreSQL        │   │   Redis / Horizon               │
+│   + pgvector (P2)  │   │   Queue + real-time monitoring  │
+└────────────────────┘   └────────────────────────────────┘
+```
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Frontend | Next.js 16.2, React 19, Tailwind CSS v4, shadcn/ui |
+| Backend | Laravel 11, PHP 8.3, Spatie Permissions |
+| Auth | Laravel Sanctum (SPA cookie auth) |
+| Database | PostgreSQL (+ pgvector in Phase 2) |
+| Queue | Redis + Laravel Horizon |
+| Storage | AWS S3 |
+| AI (Phase 2) | OpenAI / Claude API |
+
+## Modules
 
 ```
 backend/app/Modules/
-├── Auth/           — Registration, login, session management
-├── Organizations/  — Multi-tenant org management, members, invitations
-├── Documents/      — Upload pipeline, S3 storage, processing queue
-├── Compliance/     — Flags, deadlines, risk levels, resolution tracking
-└── AI/             — OCR, summarization, embeddings, risk detection
+├── Auth/           — registration, login, logout, RBAC
+├── Organizations/  — multi-tenant organization management
+├── Documents/      — upload, storage, lifecycle management
+├── Compliance/     — flag generation, resolution, severity tracking
+└── AI/             — OCR, Analysis, Embeddings, Risk, Notifications, Pipelines
 ```
 
-All API responses follow a consistent envelope:
+## Getting Started
 
-```json
-{
-  "success": true,
-  "data": {},
-  "message": "OK",
-  "meta": {}
-}
+### Prerequisites
+
+- Docker + Docker Compose
+- `cp .env.example .env` at repo root
+
+### Start all services
+
+```bash
+docker compose up -d
 ```
 
----
+Services:
+- **Frontend** → http://localhost:3000
+- **API** → http://localhost/api/v1
+- **Horizon** (queue monitor) → http://localhost/horizon
 
-## Multi-Tenancy & Roles
+### First-time setup
 
-Every piece of data is scoped to an organization — no cross-tenant data access is architecturally possible. Three roles ship by default, extensible per organization for enterprise clients:
+```bash
+# Run migrations
+docker compose exec laravel php artisan migrate
 
-| Role | Access |
-|---|---|
-| `admin` | Full access — users, settings, all documents, all compliance flags |
-| `manager` | Document review, compliance management — no user administration |
-| `staff` | Upload documents, view own work, read-only on compliance |
+# Seed roles (required once)
+docker compose exec laravel php artisan db:seed --class=RolesAndPermissionsSeeder
 
----
+# Create superadmin account
+docker compose exec laravel php artisan superadmin:create
+```
 
-## Roadmap
+### Run backend tests
 
-### Phase 1 — MVP Foundation *(in progress)*
-- [x] Infrastructure — Dockerized monorepo, Nginx, all services
-- [ ] Auth — Registration, login, Sanctum SPA session
-- [ ] Organizations — Multi-tenancy, member management, invitations
-- [ ] Documents — S3 upload pipeline, queue-based processing
-- [ ] Compliance — Flag tracking, severity levels, deadlines
-- [ ] Frontend — Auth flow, dashboard shell, document management UI
+```bash
+docker compose exec laravel php artisan test
+```
 
-### Phase 2 — AI Layer *(planned)*
-- [ ] OCR extraction from PDF and scanned documents
-- [ ] AI document summarization and key clause extraction
-- [ ] Semantic search via pgvector embeddings
-- [ ] Automated risk detection and compliance flagging
-- [ ] Notification system for deadlines and alerts
+## Authentication
 
-### Phase 3 — Scale *(planned)*
-- [ ] Super admin — multi-organization management panel
-- [ ] Billing and subscription management
-- [ ] Third-party integrations
-- [ ] Mobile application
+Jurivex AI uses **Laravel Sanctum SPA authentication**:
 
----
+1. Frontend fetches CSRF cookie: `GET /sanctum/csrf-cookie`
+2. User registers/logs in: `POST /api/v1/auth/register` or `/api/v1/auth/login`
+3. Laravel sets httpOnly session cookie (`laravel_session`)
+4. Frontend sets client-readable `auth_check=1` cookie for route protection
+5. Next.js `proxy.ts` reads `auth_check` cookie — redirects unauthenticated users to `/login`
+6. All API requests include session cookie via `withCredentials: true`
 
-## Security
+## Registration
 
-Security is not an afterthought. Key design decisions:
+Registration requires an **invitation code** issued by a superadmin:
 
-- Organization-scoped queries everywhere — cross-tenant data leakage is architecturally prevented
-- Files served exclusively via signed temporary URLs — raw S3 paths are never exposed
-- Immutable append-only audit log on all sensitive actions
-- CSRF protection via Sanctum's cookie mechanism
-- UUID primary keys throughout — no sequential ID enumeration
-- HTTPS enforced at the proxy layer in production
+1. Superadmin creates an organization and generates an invite code at `/superadmin`
+2. User visits `/register`, enters the invite code
+3. Preview shows "Joining [Org] as [role]" — user confirms and fills in details
+4. Account is created scoped to that organization with the role assigned by the code
 
----
+## RBAC
+
+Four roles (Spatie Permissions):
+
+| Role | Permissions |
+|------|------------|
+| `superadmin` | Platform-level — manage orgs, generate invite codes |
+| `admin` | Full org access — upload, delete, resolve flags, invite members |
+| `manager` | Upload, view all documents, resolve flags |
+| `staff` | Upload, view own documents only |
+
+## Document Lifecycle
+
+```
+Upload → pending
+         ↓
+     ProcessDocumentJob
+         ↓
+     processing → [Phase 2: OCR → Analysis → Embedding → RiskDetection]
+         ↓
+     analyzed / failed
+```
+
+Invalid transitions are rejected by `DocumentStatusManager`.
+
+## Compliance Flags
+
+Flags are generated by AI risk detection (Phase 2). Each flag has:
+- **Type:** `risk` | `deadline` | `alert`
+- **Severity:** `low` | `medium` | `high` | `critical`
+- **Resolution:** admin/manager can mark flags as resolved
+
+## Development
+
+See [`docs/conventions.md`](docs/conventions.md) for coding standards.
+See [`docs/architecture.md`](docs/architecture.md) for system design.
+See [`docs/ai-pipeline.md`](docs/ai-pipeline.md) for the Phase 2 AI pipeline.
 
 ## License
 
-This project is open source. You are welcome to study the code, learn from it, and build on the ideas. Please do not use it as a direct template to launch a competing commercial product.
-
----
-
-<div align="center">
-<sub>Built with Laravel, Next.js, and a lot of coffee.</sub>
-</div>
+Proprietary — All rights reserved.
