@@ -11,7 +11,11 @@ RUN apk add --no-cache \
     linux-headers \
     autoconf \
     g++ \
-    make
+    make \
+    tesseract-ocr \
+    tesseract-ocr-data-eng \
+    poppler-utils \
+    ghostscript
 
 RUN docker-php-ext-install \
     pdo_pgsql \
