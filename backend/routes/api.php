@@ -17,3 +17,4 @@ require app_path('Modules/Auth/Routes/api.php');
 require app_path('Modules/Organizations/Routes/api.php');
 require app_path('Modules/Documents/Routes/api.php');
 require app_path('Modules/Compliance/Routes/api.php');
+require app_path('Modules/Superadmin/Routes/api.php');
