@@ -17,7 +17,7 @@ return new class extends Migration
             $table->integer('char_count')->nullable();
             $table->string('ocr_engine')->nullable();
             $table->string('extractor_type')->nullable();
-            $table->float('confidence')->nullable();
+            $table->decimal('confidence', 5, 4)->nullable();
             $table->timestamp('extracted_at')->nullable();
             $table->timestamps();
         });

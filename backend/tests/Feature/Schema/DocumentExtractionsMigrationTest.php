@@ -4,19 +4,12 @@ namespace Tests\Feature\Schema;
 
 use App\Modules\AI\OCR\Models\DocumentExtraction;
 use App\Modules\Documents\Models\Document;
-use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class DocumentExtractionsMigrationTest extends TestCase
 {
     use RefreshDatabase;
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->seed(RolesAndPermissionsSeeder::class);
-    }
 
     public function test_document_extractions_table_exists(): void
     {
@@ -41,17 +34,7 @@ class DocumentExtractionsMigrationTest extends TestCase
     {
         $document = Document::factory()->create();
 
-        $extraction = DocumentExtraction::create([
-            'document_id'    => $document->id,
-            'extracted_text' => 'Sample text',
-            'page_count'     => 1,
-            'word_count'     => 2,
-            'char_count'     => 11,
-            'ocr_engine'     => 'tesseract',
-            'extractor_type' => 'pdf_text',
-            'confidence'     => 1.0,
-            'extracted_at'   => now(),
-        ]);
+        $extraction = DocumentExtraction::factory()->for($document)->create();
 
         $this->assertInstanceOf(DocumentExtraction::class, $document->extraction);
         $this->assertEquals($extraction->id, $document->extraction->id);

@@ -22,7 +22,7 @@ class DocumentExtraction extends Model
     {
         return [
             'extracted_at' => 'datetime',
-            'confidence'   => 'float',
+            'confidence'   => 'decimal:4',
             'page_count'   => 'integer',
             'word_count'   => 'integer',
             'char_count'   => 'integer',
