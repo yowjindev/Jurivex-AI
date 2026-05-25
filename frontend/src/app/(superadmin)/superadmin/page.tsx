@@ -1,8 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import React from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useState, useEffect, Fragment } from 'react'
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import {
   listOrganizations,
@@ -22,17 +21,23 @@ export default function SuperadminPage() {
 
   const [showCreateOrg, setShowCreateOrg]         = useState(false)
   const [newOrgName, setNewOrgName]               = useState('')
+  const [createOrgError, setCreateOrgError]       = useState('')
   const [expandedOrg, setExpandedOrg]             = useState<string | null>(null)
   const [generateFor, setGenerateFor]             = useState<OrgStats | null>(null)
   const [generateRole, setGenerateRole]           = useState<'admin' | 'manager' | 'staff'>('admin')
   const [generatedCode, setGeneratedCode]         = useState<InvitationCode | null>(null)
+  const [genCodeError, setGenCodeError]           = useState('')
 
   const createOrg = useMutation({
     mutationFn: () => createOrganization(newOrgName.trim()),
     onSuccess: () => {
+      setCreateOrgError('')
       queryClient.invalidateQueries({ queryKey: ['superadmin', 'organizations'] })
       setShowCreateOrg(false)
       setNewOrgName('')
+    },
+    onError: () => {
+      setCreateOrgError('Failed to create organization. Please try again.')
     },
   })
 
@@ -40,15 +45,30 @@ export default function SuperadminPage() {
     queryKey: ['superadmin', 'invitation-codes', expandedOrg],
     queryFn:  () => listInvitationCodes(expandedOrg!),
     enabled:  expandedOrg !== null,
+    placeholderData: keepPreviousData,
   })
 
   const genCode = useMutation({
     mutationFn: () => generateInvitationCode(generateFor!.id, generateRole),
     onSuccess: (code) => {
+      setGenCodeError('')
       queryClient.invalidateQueries({ queryKey: ['superadmin', 'invitation-codes', generateFor!.id] })
       setGeneratedCode(code)
     },
+    onError: () => {
+      setGenCodeError('Failed to generate code. Please try again.')
+    },
   })
+
+  useEffect(() => {
+    function handleEscape(e: KeyboardEvent) {
+      if (e.key !== 'Escape') return
+      if (showCreateOrg) { setShowCreateOrg(false); setNewOrgName(''); setCreateOrgError('') }
+      if (generateFor)   { setGenerateFor(null); setGeneratedCode(null); setGenCodeError('') }
+    }
+    document.addEventListener('keydown', handleEscape)
+    return () => document.removeEventListener('keydown', handleEscape)
+  }, [showCreateOrg, generateFor])
 
   const totalMembers   = orgs.reduce((s, o) => s + o.member_count, 0)
   const totalDocuments = orgs.reduce((s, o) => s + o.document_count, 0)
@@ -116,7 +136,7 @@ export default function SuperadminPage() {
               </thead>
               <tbody className="divide-y divide-border">
                 {orgs.map((org) => (
-                  <React.Fragment key={org.id}>
+                  <Fragment key={org.id}>
                     <tr className="hover:bg-muted/20">
                       <td className="px-6 py-4 font-medium text-foreground">{org.name}</td>
                       <td className="px-6 py-4 text-right text-muted-foreground">{org.member_count}</td>
@@ -188,7 +208,7 @@ export default function SuperadminPage() {
                         </td>
                       </tr>
                     )}
-                  </React.Fragment>
+                  </Fragment>
                 ))}
               </tbody>
             </table>
@@ -198,8 +218,11 @@ export default function SuperadminPage() {
 
       {/* Create Org Modal */}
       {showCreateOrg && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-card border border-border rounded-xl p-6 w-full max-w-sm shadow-xl">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          onClick={() => { setShowCreateOrg(false); setNewOrgName(''); setCreateOrgError('') }}
+        >
+          <div className="bg-card border border-border rounded-xl p-6 w-full max-w-sm shadow-xl" onClick={(e) => e.stopPropagation()}>
             <h3 className="font-semibold text-foreground mb-4">New Organization</h3>
             <div className="space-y-4">
               <div>
@@ -209,16 +232,19 @@ export default function SuperadminPage() {
                 <input
                   type="text"
                   value={newOrgName}
-                  onChange={(e) => setNewOrgName(e.target.value)}
+                  onChange={(e) => { setNewOrgName(e.target.value); setCreateOrgError('') }}
                   placeholder="Santos & Reyes Law Firm"
                   className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                 />
+                {createOrgError && (
+                  <p className="text-destructive text-xs mt-1">{createOrgError}</p>
+                )}
               </div>
               <div className="flex gap-3">
                 <Button
                   variant="outline"
                   className="flex-1"
-                  onClick={() => { setShowCreateOrg(false); setNewOrgName('') }}
+                  onClick={() => { setShowCreateOrg(false); setNewOrgName(''); setCreateOrgError('') }}
                 >
                   Cancel
                 </Button>
@@ -237,8 +263,11 @@ export default function SuperadminPage() {
 
       {/* Generate Code Modal */}
       {generateFor && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-card border border-border rounded-xl p-6 w-full max-w-sm shadow-xl">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          onClick={() => { setGenerateFor(null); setGeneratedCode(null); setGenCodeError('') }}
+        >
+          <div className="bg-card border border-border rounded-xl p-6 w-full max-w-sm shadow-xl" onClick={(e) => e.stopPropagation()}>
             <h3 className="font-semibold text-foreground mb-1">Generate Invite Code</h3>
             <p className="text-muted-foreground text-sm mb-4">{generateFor.name}</p>
 
@@ -258,7 +287,7 @@ export default function SuperadminPage() {
                 </p>
                 <Button
                   className="w-full"
-                  onClick={() => { setGenerateFor(null); setGeneratedCode(null) }}
+                  onClick={() => { setGenerateFor(null); setGeneratedCode(null); setGenCodeError('') }}
                 >
                   Done
                 </Button>
@@ -276,12 +305,15 @@ export default function SuperadminPage() {
                     <option value="manager">Manager</option>
                     <option value="staff">Staff</option>
                   </select>
+                  {genCodeError && (
+                    <p className="text-destructive text-xs mt-1">{genCodeError}</p>
+                  )}
                 </div>
                 <div className="flex gap-3">
                   <Button
                     variant="outline"
                     className="flex-1"
-                    onClick={() => { setGenerateFor(null); setGeneratedCode(null) }}
+                    onClick={() => { setGenerateFor(null); setGeneratedCode(null); setGenCodeError('') }}
                   >
                     Cancel
                   </Button>
