@@ -95,3 +95,8 @@ export interface InvitationCode {
   expires_at: string | null
   created_at: string
 }
+
+export interface ApiError {
+  success: false
+  message: string
+}

@@ -5,7 +5,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Upload, FileText, Trash2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/documents/StatusBadge'
+import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
+import { EmptyState } from '@/components/shared/EmptyState'
 import { listDocuments, uploadDocument, deleteDocument } from '@/lib/api/documents'
+import { parseApiError } from '@/lib/errors'
 import type { Document } from '@/types'
 
 function formatBytes(bytes: number): string {
@@ -42,8 +45,8 @@ export default function DocumentsPage() {
       setCategory('')
       setUploadError('')
     },
-    onError: () => {
-      setUploadError('Upload failed. Check the file type (PDF, DOCX, DOC, TXT) and size (max 50 MB).')
+    onError: (error) => {
+      setUploadError(parseApiError(error))
     },
   })
 
@@ -71,22 +74,22 @@ export default function DocumentsPage() {
 
       {isPending && (
         <div className="flex justify-center py-16">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          <LoadingSpinner />
         </div>
       )}
 
       {!isPending && documents.length === 0 && (
-        <div className="rounded-xl border border-border bg-card p-12 text-center">
-          <FileText size={32} className="mx-auto text-muted-foreground mb-3" />
-          <p className="text-foreground font-medium mb-1">No documents yet</p>
-          <p className="text-muted-foreground text-sm mb-4">
-            Upload a PDF, DOCX, DOC, or TXT file to get started.
-          </p>
-          <Button onClick={() => setModalOpen(true)} className="flex items-center gap-2 mx-auto">
-            <Upload size={15} />
-            Upload your first document
-          </Button>
-        </div>
+        <EmptyState
+          icon={FileText}
+          title="No documents yet"
+          description="Upload a PDF, DOCX, DOC, or TXT file to get started."
+          action={
+            <Button onClick={() => setModalOpen(true)} className="flex items-center gap-2 mx-auto">
+              <Upload size={15} />
+              Upload your first document
+            </Button>
+          }
+        />
       )}
 
       {!isPending && documents.length > 0 && (

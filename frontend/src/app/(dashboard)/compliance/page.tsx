@@ -4,6 +4,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { ShieldAlert, CheckCircle } from 'lucide-react'
 import { useAuthStore } from '@/stores/authStore'
 import { SeverityBadge } from '@/components/compliance/SeverityBadge'
+import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
+import { EmptyState } from '@/components/shared/EmptyState'
+import { ErrorState } from '@/components/shared/ErrorState'
 import { listFlags, resolveFlag } from '@/lib/api/compliance'
 import type { ComplianceFlag } from '@/types'
 
@@ -45,25 +48,23 @@ export default function CompliancePage() {
 
       {isPending && (
         <div className="flex justify-center py-16">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          <LoadingSpinner />
         </div>
       )}
 
       {isError && (
-        <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-6 text-center">
-          <p className="text-sm text-destructive font-medium">Failed to load compliance flags.</p>
-          <p className="text-xs text-muted-foreground mt-1">Check your connection and refresh the page.</p>
-        </div>
+        <ErrorState
+          title="Failed to load compliance flags."
+          description="Check your connection and refresh the page."
+        />
       )}
 
       {!isPending && !isError && flags.length === 0 && (
-        <div className="rounded-xl border border-border bg-card p-12 text-center">
-          <ShieldAlert size={32} className="mx-auto text-muted-foreground mb-3" />
-          <p className="text-foreground font-medium mb-1">No compliance flags</p>
-          <p className="text-muted-foreground text-sm">
-            Flags will appear here once AI analysis detects compliance issues.
-          </p>
-        </div>
+        <EmptyState
+          icon={ShieldAlert}
+          title="No compliance flags"
+          description="Flags will appear here once AI analysis detects compliance issues."
+        />
       )}
 
       {!isPending && !isError && flags.length > 0 && (
