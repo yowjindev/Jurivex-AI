@@ -20,17 +20,18 @@ interface DetailsForm {
 export default function RegisterPage() {
   const router = useRouter()
 
-  const [step, setStep]           = useState<Step>('code')
-  const [code, setCode]           = useState('')
-  const [codeError, setCodeError] = useState('')
-  const [codeLoading, setCL]      = useState(false)
-  const [preview, setPreview]     = useState<InvitationLookup | null>(null)
+  const [step, setStep]                 = useState<Step>('code')
+  const [code, setCode]                 = useState('')
+  const [codeError, setCodeError]       = useState('')
+  const [codeLoading, setCodeLoading]   = useState(false)
+  const [preview, setPreview]           = useState<InvitationLookup | null>(null)
 
-  const [form, setForm]           = useState<DetailsForm>({
+  const [form, setForm]                 = useState<DetailsForm>({
     name: '', email: '', password: '', password_confirmation: '',
   })
-  const [errors, setErrors]       = useState<Record<string, string[]>>({})
-  const [submitLoading, setSL]    = useState(false)
+  const [errors, setErrors]             = useState<Record<string, string[]>>({})
+  const [submitLoading, setSubmitLoading] = useState(false)
+  const [submitError, setSubmitError]   = useState('')
 
   function updateForm(field: keyof DetailsForm, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }))
@@ -40,7 +41,7 @@ export default function RegisterPage() {
   async function handleVerifyCode(e: React.FormEvent) {
     e.preventDefault()
     setCodeError('')
-    setCL(true)
+    setCodeLoading(true)
     try {
       const data = await lookupInvitation(code.trim().toUpperCase())
       setPreview(data)
@@ -48,14 +49,15 @@ export default function RegisterPage() {
     } catch {
       setCodeError('Invalid or expired invitation code.')
     } finally {
-      setCL(false)
+      setCodeLoading(false)
     }
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setErrors({})
-    setSL(true)
+    setSubmitError('')
+    setSubmitLoading(true)
     try {
       await api.post('/api/v1/auth/register', {
         invitation_code: code.trim().toUpperCase(),
@@ -65,9 +67,13 @@ export default function RegisterPage() {
       router.push('/dashboard')
     } catch (err: unknown) {
       const data = (err as { response?: { data?: ValidationError } })?.response?.data
-      if (data?.errors) setErrors(data.errors)
+      if (data?.errors) {
+        setErrors(data.errors)
+      } else {
+        setSubmitError('Something went wrong. Please try again.')
+      }
     } finally {
-      setSL(false)
+      setSubmitLoading(false)
     }
   }
 
@@ -94,6 +100,7 @@ export default function RegisterPage() {
               required
               placeholder="XXXXXXXX"
               maxLength={16}
+              autoComplete="off"
               className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring uppercase tracking-widest"
             />
             {codeError && <p className="text-destructive text-xs mt-1">{codeError}</p>}
@@ -114,7 +121,7 @@ export default function RegisterPage() {
               <span className="font-medium text-foreground capitalize">{preview.role}</span>
               <button
                 type="button"
-                onClick={() => { setStep('code'); setPreview(null) }}
+                onClick={() => { setStep('code'); setPreview(null); setCodeError('') }}
                 className="ml-3 text-xs text-muted-foreground underline hover:text-foreground"
               >
                 Change
@@ -124,12 +131,12 @@ export default function RegisterPage() {
 
           {(
             [
-              { id: 'name',                  label: 'Your name',        type: 'text',     placeholder: 'Jane Smith' },
-              { id: 'email',                 label: 'Email',            type: 'email',    placeholder: 'jane@firm.com' },
-              { id: 'password',              label: 'Password',         type: 'password', placeholder: '••••••••' },
-              { id: 'password_confirmation', label: 'Confirm password', type: 'password', placeholder: '••••••••' },
-            ] as { id: keyof DetailsForm; label: string; type: string; placeholder: string }[]
-          ).map(({ id, label, type, placeholder }) => (
+              { id: 'name',                  label: 'Your name',        type: 'text',     placeholder: 'Jane Smith',   autoComplete: 'name' },
+              { id: 'email',                 label: 'Email',            type: 'email',    placeholder: 'jane@firm.com', autoComplete: 'email' },
+              { id: 'password',              label: 'Password',         type: 'password', placeholder: '••••••••',     autoComplete: 'new-password' },
+              { id: 'password_confirmation', label: 'Confirm password', type: 'password', placeholder: '••••••••',     autoComplete: 'new-password' },
+            ] as { id: keyof DetailsForm; label: string; type: string; placeholder: string; autoComplete: string }[]
+          ).map(({ id, label, type, placeholder, autoComplete }) => (
             <div key={id}>
               <label htmlFor={id} className="block text-sm font-medium text-foreground mb-1.5">
                 {label}
@@ -141,17 +148,27 @@ export default function RegisterPage() {
                 onChange={(e) => updateForm(id, e.target.value)}
                 required
                 placeholder={placeholder}
+                autoComplete={autoComplete}
+                aria-invalid={errors[id]?.length > 0}
+                aria-describedby={errors[id]?.length > 0 ? `${id}-error` : undefined}
                 className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
               />
-              {errors[id]?.map((msg) => (
-                <p key={msg} className="text-destructive text-xs mt-1">{msg}</p>
-              ))}
+              {errors[id]?.length > 0 && (
+                <div id={`${id}-error`}>
+                  {errors[id].map((msg) => (
+                    <p key={msg} className="text-destructive text-xs mt-1">{msg}</p>
+                  ))}
+                </div>
+              )}
             </div>
           ))}
 
           <Button type="submit" disabled={submitLoading} className="w-full h-10 mt-2">
             {submitLoading ? 'Creating account…' : 'Create account'}
           </Button>
+          {submitError && (
+            <p className="text-destructive text-xs text-center">{submitError}</p>
+          )}
         </form>
       )}
 
