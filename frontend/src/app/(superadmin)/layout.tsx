@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuthStore } from '@/stores/authStore'
+import { useAuth } from '@/hooks/useAuth'
 
 export default function SuperadminLayout({
   children,
@@ -10,17 +10,15 @@ export default function SuperadminLayout({
   children: React.ReactNode
 }) {
   const router = useRouter()
-  const user   = useAuthStore((s) => s.user)
+  const { user, isPending } = useAuth()
 
   useEffect(() => {
-    if (user !== null && !user.roles.includes('superadmin')) {
+    if (!isPending && user && !user.roles.includes('superadmin')) {
       router.replace('/dashboard')
     }
-  }, [user, router])
+  }, [isPending, user, router])
 
-  if (!user?.roles.includes('superadmin')) {
-    return null
-  }
+  if (isPending || !user?.roles.includes('superadmin')) return null
 
   return <>{children}</>
 }
