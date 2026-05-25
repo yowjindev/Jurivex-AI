@@ -100,3 +100,9 @@ export interface ApiError {
   success: false
   message: string
 }
+
+import type { DOCUMENT_STATUS, COMPLIANCE_SEVERITY, COMPLIANCE_TYPE } from '@/lib/api/constants'
+
+export type DocumentStatus = typeof DOCUMENT_STATUS[keyof typeof DOCUMENT_STATUS]
+export type ComplianceSeverity = typeof COMPLIANCE_SEVERITY[keyof typeof COMPLIANCE_SEVERITY]
+export type ComplianceType = typeof COMPLIANCE_TYPE[keyof typeof COMPLIANCE_TYPE]
