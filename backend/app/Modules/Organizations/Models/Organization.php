@@ -2,6 +2,8 @@
 
 namespace App\Modules\Organizations\Models;
 
+use App\Modules\Compliance\Models\ComplianceFlag;
+use App\Modules\Documents\Models\Document;
 use Database\Factories\OrganizationFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -18,6 +20,21 @@ class Organization extends Model
     public function users(): HasMany
     {
         return $this->hasMany(\App\Models\User::class);
+    }
+
+    public function documents(): HasMany
+    {
+        return $this->hasMany(Document::class);
+    }
+
+    public function complianceFlags(): HasMany
+    {
+        return $this->hasMany(ComplianceFlag::class);
+    }
+
+    public function invitationCodes(): HasMany
+    {
+        return $this->hasMany(InvitationCode::class);
     }
 
     protected static function newFactory(): OrganizationFactory
