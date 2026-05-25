@@ -2,6 +2,7 @@
 namespace App\Modules\Documents\Models;
 
 use App\Models\User;
+use App\Modules\AI\OCR\Models\DocumentExtraction;
 use App\Modules\Organizations\Models\Organization;
 use Database\Factories\DocumentFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -46,6 +47,11 @@ class Document extends Model
     public function analysis(): HasOne
     {
         return $this->hasOne(DocumentAnalysis::class);
+    }
+
+    public function extraction(): HasOne
+    {
+        return $this->hasOne(DocumentExtraction::class);
     }
 
     protected static function newFactory(): DocumentFactory
