@@ -320,7 +320,7 @@ export default function SuperadminPage() {
                   <Button
                     className="flex-1"
                     disabled={genCode.isPending}
-                    onClick={() => genCode.mutate()}
+                    onClick={() => { setGenCodeError(''); genCode.mutate() }}
                   >
                     {genCode.isPending ? 'Generating…' : 'Generate'}
                   </Button>
