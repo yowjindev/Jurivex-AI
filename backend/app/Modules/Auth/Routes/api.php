@@ -4,8 +4,9 @@ use App\Modules\Auth\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1/auth')->group(function () {
-    Route::post('/register', [AuthController::class, 'register'])->name('auth.register');
-    Route::post('/login',    [AuthController::class, 'login'])->name('auth.login');
+    Route::post('/register',         [AuthController::class, 'register'])->name('auth.register');
+    Route::post('/login',            [AuthController::class, 'login'])->name('auth.login');
+    Route::get('/invitation/{code}', [AuthController::class, 'lookupInvitation'])->name('auth.invitation.lookup');
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/logout', [AuthController::class, 'logout'])->name('auth.logout');

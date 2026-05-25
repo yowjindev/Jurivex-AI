@@ -6,36 +6,44 @@ use App\Models\User;
 use App\Modules\Auth\DTOs\LoginDTO;
 use App\Modules\Auth\DTOs\RegisterDTO;
 use App\Modules\Auth\Models\AuditLog;
-use App\Modules\Organizations\Repositories\Contracts\IOrganizationRepository;
+use App\Modules\Organizations\Models\InvitationCode;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
 class AuthService
 {
-    public function __construct(
-        private readonly IOrganizationRepository $organizationRepository,
-    ) {}
-
     public function register(RegisterDTO $dto): User
     {
-        return DB::transaction(function () use ($dto) {
-            $org = $this->organizationRepository->createWithSlug($dto->organizationName);
+        $invitation = InvitationCode::where('code', $dto->invitationCode)->first();
 
+        if (! $invitation || ! $invitation->isValid()) {
+            throw ValidationException::withMessages([
+                'invitation_code' => ['Invalid or expired invitation code.'],
+            ]);
+        }
+
+        return DB::transaction(function () use ($dto, $invitation) {
             $user = User::create([
-                'organization_id' => $org->id,
+                'organization_id' => $invitation->organization_id,
                 'name'            => $dto->name,
                 'email'           => $dto->email,
-                'password'        => $dto->password,
+                'password'        => Hash::make($dto->password),
             ]);
 
-            $user->assignRole('admin');
+            $user->assignRole($invitation->role);
+
+            $invitation->update([
+                'used_by' => $user->id,
+                'used_at' => now(),
+            ]);
 
             AuditLog::create([
-                'organization_id' => $org->id,
+                'organization_id' => $invitation->organization_id,
                 'user_id'         => $user->id,
                 'action'          => 'user.registered',
-                'new_values'      => ['email' => $user->email, 'role' => 'admin'],
+                'new_values'      => ['email' => $user->email, 'role' => $invitation->role],
             ]);
 
             return $user;

@@ -4,6 +4,7 @@ namespace Tests\Feature\Auth;
 
 use App\Models\User;
 use App\Modules\Auth\Models\AuditLog;
+use App\Modules\Organizations\Models\InvitationCode;
 use App\Modules\Organizations\Models\Organization;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -13,16 +14,24 @@ class RegisterTest extends TestCase
 {
     use RefreshDatabase;
 
+    private Organization $org;
+    private InvitationCode $invitation;
+
     protected function setUp(): void
     {
         parent::setUp();
         $this->seed(RolesAndPermissionsSeeder::class);
+        $this->org        = Organization::factory()->create(['name' => 'Acme Corp']);
+        $this->invitation = InvitationCode::factory()->for($this->org)->create([
+            'code' => 'TESTCODE',
+            'role' => 'admin',
+        ]);
     }
 
-    public function test_user_can_register_and_creates_organization(): void
+    public function test_user_can_register_with_valid_invitation_code(): void
     {
         $response = $this->postJson('/api/v1/auth/register', [
-            'organization_name'     => 'Acme Corp',
+            'invitation_code'       => 'TESTCODE',
             'name'                  => 'Jane Doe',
             'email'                 => 'jane@acme.com',
             'password'              => 'secret123',
@@ -43,19 +52,24 @@ class RegisterTest extends TestCase
                      ],
                  ]);
 
-        $this->assertDatabaseHas('organizations', ['name' => 'Acme Corp']);
-        $this->assertDatabaseHas('users', ['email' => 'jane@acme.com']);
-
         $user = User::where('email', 'jane@acme.com')->first();
+        $this->assertNotNull($user);
+        $this->assertEquals($this->org->id, $user->organization_id);
         $this->assertTrue($user->hasRole('admin'));
+
+        $this->assertDatabaseHas('invitation_codes', [
+            'code'    => 'TESTCODE',
+            'used_by' => $user->id,
+        ]);
+        $this->assertNotNull($this->invitation->fresh()->used_at);
     }
 
     public function test_register_creates_audit_log(): void
     {
         $this->postJson('/api/v1/auth/register', [
-            'organization_name'     => 'Beta LLC',
+            'invitation_code'       => 'TESTCODE',
             'name'                  => 'John Smith',
-            'email'                 => 'john@beta.com',
+            'email'                 => 'john@acme.com',
             'password'              => 'secret123',
             'password_confirmation' => 'secret123',
         ]);
@@ -63,7 +77,7 @@ class RegisterTest extends TestCase
         $this->assertDatabaseHas('audit_logs', ['action' => 'user.registered']);
     }
 
-    public function test_register_requires_organization_name(): void
+    public function test_register_requires_invitation_code(): void
     {
         $response = $this->postJson('/api/v1/auth/register', [
             'name'                  => 'Jane Doe',
@@ -73,16 +87,15 @@ class RegisterTest extends TestCase
         ]);
 
         $response->assertStatus(422)
-                 ->assertJsonValidationErrors(['organization_name']);
+                 ->assertJsonValidationErrors(['invitation_code']);
     }
 
     public function test_register_requires_unique_email(): void
     {
-        $org = Organization::factory()->create();
-        User::factory()->for($org)->create(['email' => 'taken@acme.com']);
+        User::factory()->for($this->org)->create(['email' => 'taken@acme.com']);
 
         $response = $this->postJson('/api/v1/auth/register', [
-            'organization_name'     => 'New Corp',
+            'invitation_code'       => 'TESTCODE',
             'name'                  => 'Jane Doe',
             'email'                 => 'taken@acme.com',
             'password'              => 'secret123',
@@ -96,7 +109,7 @@ class RegisterTest extends TestCase
     public function test_register_requires_password_confirmation(): void
     {
         $response = $this->postJson('/api/v1/auth/register', [
-            'organization_name'     => 'Acme Corp',
+            'invitation_code'       => 'TESTCODE',
             'name'                  => 'Jane Doe',
             'email'                 => 'jane@acme.com',
             'password'              => 'secret123',
