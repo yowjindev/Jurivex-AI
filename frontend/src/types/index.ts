@@ -70,3 +70,28 @@ export interface ComplianceFlag {
   created_at: string
   updated_at: string
 }
+
+export interface InvitationLookup {
+  organization_name: string
+  role: 'admin' | 'manager' | 'staff'
+}
+
+export interface OrgStats {
+  id: string
+  name: string
+  slug: string
+  member_count: number
+  document_count: number
+  flag_count: number
+  created_at: string
+}
+
+export interface InvitationCode {
+  id: string
+  code: string
+  role: 'admin' | 'manager' | 'staff'
+  is_used: boolean
+  used_at: string | null
+  expires_at: string | null
+  created_at: string
+}
