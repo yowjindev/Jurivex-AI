@@ -32,15 +32,20 @@ class RolesAndPermissionsTest extends TestCase
         $this->assertDatabaseHas('roles', ['name' => 'staff', 'guard_name' => 'web']);
     }
 
-    public function test_exactly_three_roles_exist(): void
+    public function test_superadmin_role_exists(): void
     {
-        $this->assertEquals(3, Role::count());
+        $this->assertDatabaseHas('roles', ['name' => 'superadmin', 'guard_name' => 'web']);
+    }
+
+    public function test_exactly_four_roles_exist(): void
+    {
+        $this->assertEquals(4, Role::count());
     }
 
     public function test_seeder_is_idempotent(): void
     {
         // Run a second time — should not throw or duplicate
         $this->seed(RolesAndPermissionsSeeder::class);
-        $this->assertEquals(3, Role::count());
+        $this->assertEquals(4, Role::count());
     }
 }
