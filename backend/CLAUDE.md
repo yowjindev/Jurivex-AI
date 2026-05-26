@@ -56,7 +56,7 @@ Queue::fake();         // for job dispatch tests
 - `OCRJob` dispatched from `ProcessDocumentJob`, runs on the `ocr` queue via Horizon
 - `OcrService` delegates to `PdfTextExtractor` (pdftotext/GhostScript) or `ImageTextExtractor` (Tesseract)
 - Extracted text stored via `DocumentExtractionRepository` → `document_extractions` table
-- Status flow: `pending → processing → ocr_processing → ocr_completed → analyzed`
+- Status flow: `pending → ocr_processing → ocr_completed → analyzed`
 - Events: `OCRCompleted` / `OCRFailed` → `LogOCRActivity` listener
 
 Phase 2B (AI analysis, embeddings, risk detection) is not yet implemented.

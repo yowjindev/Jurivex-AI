@@ -13,7 +13,7 @@ const LABELS: Record<Document['status'], string> = {
   pending:        'Pending',
   processing:     'Processing',
   ocr_processing: 'OCR Processing',
-  ocr_completed:  'OCR Complete',
+  ocr_completed:  'OCR Completed',
   analyzed:       'Analyzed',
   failed:         'Failed',
 }

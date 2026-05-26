@@ -55,10 +55,20 @@ DocumentService::upload()
         ← LogDocumentUploadedActivity (Documents module — Phase 2: webhooks)
 
 ProcessDocumentJob::handle()
-    → DocumentProcessingStarted::dispatch()
-        ← LogDocumentProcessingActivity (Documents module — Phase 2: WebSocket push)
-    → DocumentAnalysisCompleted::dispatch()
-        ← LogDocumentAnalysisActivity (Documents module — Phase 2: NotificationJob)
+    → transitions document: pending → ocr_processing
+    → OCRJob::dispatch() (ocr queue)
+
+OCRJob::handle()
+    → OcrService::process() → PdfTextExtractor | ImageTextExtractor
+    → DocumentExtractionRepository::upsert()
+    → transitions document: ocr_processing → ocr_completed
+    → OCRCompleted::dispatch()
+        ← LogOCRActivity::handleCompleted (AI module — writes audit_logs)
+
+OCRJob::failed()
+    → transitions document: → failed
+    → OCRFailed::dispatch()
+        ← LogOCRActivity::handleFailed (AI module — writes audit_logs)
 ```
 
 ## Multi-Tenancy
