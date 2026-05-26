@@ -30,6 +30,12 @@ class OcrEventsTest extends TestCase
             'auditable_type'  => 'document',
             'auditable_id'    => $document->id,
         ]);
+
+        $log = AuditLog::where('action', 'ocr.completed')->where('auditable_id', $document->id)->first();
+        $this->assertEquals('pdf_text', $log->metadata['extractor_type']);
+        $this->assertEquals(2, $log->metadata['page_count']);
+        $this->assertEquals(10, $log->metadata['word_count']);
+        $this->assertEquals(0.95, $log->metadata['confidence']);
     }
 
     public function test_ocr_failed_event_logs_audit_entry(): void
@@ -46,6 +52,9 @@ class OcrEventsTest extends TestCase
             'auditable_type'  => 'document',
             'auditable_id'    => $document->id,
         ]);
+
+        $log = AuditLog::where('action', 'ocr.failed')->where('auditable_id', $document->id)->first();
+        $this->assertEquals('Tesseract binary not found', $log->metadata['reason']);
     }
 
     public function test_ocr_completed_event_is_dispatched_and_listener_fires(): void
