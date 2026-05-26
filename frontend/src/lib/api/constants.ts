@@ -16,6 +16,8 @@ export const HTTP_STATUS = {
 export const DOCUMENT_STATUS = {
   PENDING: 'pending',
   PROCESSING: 'processing',
+  OCR_PROCESSING: 'ocr_processing',
+  OCR_COMPLETED: 'ocr_completed',
   ANALYZED: 'analyzed',
   FAILED: 'failed',
 } as const

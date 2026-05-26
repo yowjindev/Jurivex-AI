@@ -4,19 +4,36 @@
 
 The AI pipeline processes documents through a chain of jobs, each adding structured analysis data. The pipeline is **event-driven and asynchronous** — no AI call blocks an HTTP request.
 
-## Current State (Phase 1.5)
+## Phase 2A — OCR Pipeline (Implemented)
 
-`ProcessDocumentJob` is a stub:
+Real OCR extraction is wired. `OCRJob` runs on the `ocr` queue via Laravel Horizon.
 
 ```
 Document uploaded (pending)
     → ProcessDocumentJob dispatched
         → status: processing
-        → [stub: immediately sets analyzed]
-        → status: analyzed
+        → OCRJob dispatched (queue: ocr)
+            → OcrService::extract()
+                → PdfTextExtractor  (pdftotext / GhostScript for PDFs)
+                → ImageTextExtractor (Tesseract for images)
+            → DocumentExtractionRepository::store() → document_extractions table
+            → OCRCompleted event dispatched
+                ← LogOCRActivity (Documents module)
+            → status: ocr_completed
+        → [status: ocr_processing while OCRJob is running]
 ```
 
-The full Phase 2 pipeline is designed but not yet wired.
+**Status flow:** `pending → processing → ocr_processing → ocr_completed → analyzed`
+
+**On failure:** `OCRFailed` event dispatched → `LogOCRActivity` listener → status: `failed`
+
+Remaining Phase 2 jobs (`AIAnalysisJob`, `EmbeddingJob`, `RiskDetectionJob`) are not yet wired — see Phase 2 Pipeline Design below.
+
+## Current State (Phase 1.5 — superseded by Phase 2A for OCR)
+
+~~`ProcessDocumentJob` is a stub that immediately sets `analyzed` without real AI calls.~~
+
+Phase 2A replaced the stub OCR step with real extraction. The AI analysis steps remain stubs until Phase 2B.
 
 ## Phase 2 Pipeline Design
 

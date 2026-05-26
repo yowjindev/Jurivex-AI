@@ -100,8 +100,8 @@ All background jobs use Laravel Horizon (Redis-backed):
 | Job | Queue | Purpose |
 |-----|-------|---------|
 | `ProcessDocumentJob` | default | Orchestrate document analysis pipeline |
-| `OCRJob` (Phase 2) | ai | Extract text from document |
-| `AIAnalysisJob` (Phase 2) | ai | Generate AI summary |
-| `EmbeddingJob` (Phase 2) | ai | Generate vector embeddings |
-| `RiskDetectionJob` (Phase 2) | ai | Detect compliance risks |
-| `NotificationJob` (Phase 2) | notifications | Send user notifications |
+| `OCRJob` | ocr | Extract text from document (Phase 2A — implemented) |
+| `AIAnalysisJob` (Phase 2B) | ai | Generate AI summary |
+| `EmbeddingJob` (Phase 2B) | ai | Generate vector embeddings |
+| `RiskDetectionJob` (Phase 2B) | ai | Detect compliance risks |
+| `NotificationJob` (Phase 2B) | notifications | Send user notifications |

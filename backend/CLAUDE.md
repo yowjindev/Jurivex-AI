@@ -48,3 +48,15 @@ Queue::fake();         // for job dispatch tests
 - Users register with codes via `POST /api/v1/auth/register` + `invitation_code` field
 - Codes are single-use, optionally expiring, tied to org + role
 - `InvitationCode::isValid()` checks used + expired state
+
+## AI Pipeline Status
+
+**Phase 2A complete** — real OCR extraction is wired.
+
+- `OCRJob` dispatched from `ProcessDocumentJob`, runs on the `ocr` queue via Horizon
+- `OcrService` delegates to `PdfTextExtractor` (pdftotext/GhostScript) or `ImageTextExtractor` (Tesseract)
+- Extracted text stored via `DocumentExtractionRepository` → `document_extractions` table
+- Status flow: `pending → processing → ocr_processing → ocr_completed → analyzed`
+- Events: `OCRCompleted` / `OCRFailed` → `LogOCRActivity` listener
+
+Phase 2B (AI analysis, embeddings, risk detection) is not yet implemented.
