@@ -18,11 +18,11 @@ class ImageTextExtractor implements TextExtractorContract
     {
         $result = Process::run(['tesseract', $filePath, 'stdout', '-l', 'eng']);
 
-        $text = trim($result->output());
-
-        if ($result->failed() && empty($text)) {
+        if ($result->failed()) {
             throw new OcrFailedException("Tesseract failed: " . $result->errorOutput());
         }
+
+        $text = trim($result->output());
 
         return new ExtractionResult(
             text:          $text,

@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Process;
 
 class PdfTextExtractor implements TextExtractorContract
 {
+    private const MIN_NATIVE_TEXT_LENGTH = 50;
+
     public function canHandle(string $mimeType): bool
     {
         return $mimeType === 'application/pdf';
@@ -22,7 +24,7 @@ class PdfTextExtractor implements TextExtractorContract
         $cleanText = str_replace("\f", "\n\n", trim($rawText));
         $pageCount = max(1, substr_count($rawText, "\f") + 1);
 
-        if (strlen(trim($cleanText)) >= 50) {
+        if (!$result->failed() && strlen(trim($cleanText)) >= self::MIN_NATIVE_TEXT_LENGTH) {
             return new ExtractionResult(
                 text:          $cleanText,
                 pageCount:     $pageCount,

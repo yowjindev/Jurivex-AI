@@ -48,6 +48,19 @@ class OcrParserTest extends TestCase
         $this->assertEquals(1, $result->pageCount);
     }
 
+    public function test_pdf_extractor_falls_back_to_ocr_when_pdftotext_fails(): void
+    {
+        Process::fake([
+            "'pdftotext'*" => Process::result(output: '', exitCode: 1),
+            "'pdftoppm'*"  => Process::result(output: '', exitCode: 0),
+        ]);
+
+        $this->expectException(\App\Exceptions\AI\OcrFailedException::class);
+        $this->expectExceptionMessage('PDF to image conversion produced no pages.');
+
+        (new PdfTextExtractor())->extract('/tmp/corrupt.pdf');
+    }
+
     // ── ImageTextExtractor ────────────────────────────────────────────────────
 
     public function test_image_extractor_handles_image_mime_types(): void
