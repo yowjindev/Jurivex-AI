@@ -210,6 +210,16 @@ return [
             'timeout' => 60,
             'nice' => 0,
         ],
+
+        'supervisor-ocr' => [
+            'connection' => 'redis',
+            'queue' => ['ocr'],
+            'balance' => 'simple',
+            'minProcesses' => 1,
+            'maxProcesses' => 3,
+            'timeout' => 300,
+            'tries' => 3,
+        ],
     ],
 
     'environments' => [
@@ -219,10 +229,20 @@ return [
                 'balanceMaxShift' => 1,
                 'balanceCooldown' => 3,
             ],
+
+            'supervisor-ocr' => [
+                'minProcesses' => 1,
+                'maxProcesses' => 3,
+            ],
         ],
 
         'local' => [
             'supervisor-1' => [
+                'maxProcesses' => 3,
+            ],
+
+            'supervisor-ocr' => [
+                'minProcesses' => 1,
                 'maxProcesses' => 3,
             ],
         ],
