@@ -16,10 +16,12 @@ class Document extends Model
 {
     use HasFactory, HasUuids, SoftDeletes;
 
-    const STATUS_PENDING    = 'pending';
-    const STATUS_PROCESSING = 'processing';
-    const STATUS_ANALYZED   = 'analyzed';
-    const STATUS_FAILED     = 'failed';
+    const STATUS_PENDING        = 'pending';
+    const STATUS_PROCESSING     = 'processing';   // legacy — kept for backward compat; not in VALID_TRANSITIONS
+    const STATUS_OCR_PROCESSING = 'ocr_processing';
+    const STATUS_OCR_COMPLETED  = 'ocr_completed';
+    const STATUS_ANALYZED       = 'analyzed';
+    const STATUS_FAILED         = 'failed';
 
     protected $fillable = [
         'organization_id', 'uploaded_by', 'title', 'original_filename',
