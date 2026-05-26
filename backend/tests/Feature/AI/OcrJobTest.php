@@ -37,7 +37,7 @@ class OcrJobTest extends TestCase
         Event::assertNotDispatched(OCRFailed::class);
     }
 
-    public function test_handle_transitions_to_failed_and_dispatches_ocr_failed_on_exception(): void
+    public function test_handle_transitions_to_failed_and_rethrows_on_exception(): void
     {
         $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
         Event::fake([OCRCompleted::class, OCRFailed::class]);
@@ -58,7 +58,9 @@ class OcrJobTest extends TestCase
 
         $document->refresh();
         $this->assertEquals(Document::STATUS_FAILED, $document->status);
-        Event::assertDispatched(OCRFailed::class);
+        // OCRFailed is dispatched only from failed(), not from handle() catch —
+        // this prevents double-dispatch on the final retry
+        Event::assertNotDispatched(OCRFailed::class);
         Event::assertNotDispatched(OCRCompleted::class);
     }
 

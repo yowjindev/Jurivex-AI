@@ -41,7 +41,6 @@ class OCRJob implements ShouldQueue
             OCRCompleted::dispatch($this->document, $result);
         } catch (Throwable $e) {
             $statusManager->transition($this->document, Document::STATUS_FAILED);
-            OCRFailed::dispatch($this->document, $e->getMessage());
             throw $e;
         }
     }
