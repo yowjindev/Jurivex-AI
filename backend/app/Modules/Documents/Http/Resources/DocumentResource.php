@@ -21,6 +21,16 @@ class DocumentResource extends JsonResource
             'organization_id'   => $this->organization_id,
             'created_at'        => $this->created_at?->toIso8601String(),
             'updated_at'        => $this->updated_at?->toIso8601String(),
+            'analysis'          => $this->whenLoaded('analysis', fn () => $this->analysis ? [
+                'summary'       => $this->analysis->summary,
+                'key_points'    => $this->analysis->key_points,
+                'parties'       => $this->analysis->parties,
+                'governing_law' => $this->analysis->governing_law,
+                'risk_score'    => $this->analysis->risk_score,
+                'confidence'    => $this->analysis->confidence,
+                'ai_model'      => $this->analysis->ai_model,
+                'analyzed_at'   => $this->analysis->analyzed_at?->toISOString(),
+            ] : null),
         ];
     }
 }

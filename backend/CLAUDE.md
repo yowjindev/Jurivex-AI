@@ -52,11 +52,15 @@ Queue::fake();         // for job dispatch tests
 ## AI Pipeline Status
 
 **Phase 2A complete** — real OCR extraction is wired.
+**Phase 2B complete** — real AI analysis via Claude is wired.
 
 - `OCRJob` dispatched from `ProcessDocumentJob`, runs on the `ocr` queue via Horizon
+- `AIAnalysisJob` dispatched from `DispatchAIAnalysis` listener (on `OCRCompleted`), runs on `analysis` queue
 - `OcrService` delegates to `PdfTextExtractor` (pdftotext/GhostScript) or `ImageTextExtractor` (Tesseract)
+- `ClaudeClient` calls Claude Messages API, parses JSON, produces `AnalysisResult`
 - Extracted text stored via `DocumentExtractionRepository` → `document_extractions` table
-- Status flow: `pending → ocr_processing → ocr_completed → analyzed`
-- Events: `OCRCompleted` / `OCRFailed` → `LogOCRActivity` listener
+- Analysis stored via `DocumentAnalysisRepository` → `document_analyses` table
+- Status flow: `pending → ocr_processing → ocr_completed → ai_processing → analyzed`
+- Events: `OCRCompleted` → `LogOCRActivity` + `DispatchAIAnalysis`; `DocumentAnalysisCompleted` → `LogDocumentAnalysisActivity`
 
-Phase 2B (AI analysis, embeddings, risk detection) is not yet implemented.
+Phase 2C (automated compliance flags from analysis) is not yet implemented.

@@ -5,6 +5,7 @@ namespace Tests\Feature\Documents;
 use App\Models\User;
 use App\Modules\Documents\Jobs\ProcessDocumentJob;
 use App\Modules\Documents\Models\Document;
+use App\Modules\Documents\Models\DocumentAnalysis;
 use App\Modules\Organizations\Models\Organization;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -240,6 +241,30 @@ class DocumentsApiTest extends TestCase
         $this->actingAs($admin)
             ->getJson("/api/v1/documents/{$document->id}")
             ->assertStatus(404);
+    }
+
+    public function test_document_show_includes_analysis_when_present(): void
+    {
+        $org      = Organization::factory()->create();
+        $admin    = User::factory()->for($org)->create();
+        $admin->assignRole('admin');
+        $document = Document::factory()->create([
+            'organization_id' => $org->id,
+            'uploaded_by'     => $admin->id,
+            'status'          => Document::STATUS_ANALYZED,
+        ]);
+
+        DocumentAnalysis::factory()->create([
+            'document_id' => $document->id,
+            'summary'     => 'This is a test summary.',
+            'risk_score'  => 0.42,
+        ]);
+
+        $this->actingAs($admin)
+            ->getJson("/api/v1/documents/{$document->id}")
+            ->assertStatus(200)
+            ->assertJsonPath('data.analysis.summary', 'This is a test summary.')
+            ->assertJsonPath('data.analysis.risk_score', '0.4200');
     }
 
     // ─── UPDATE ───────────────────────────────────────────────────────────────

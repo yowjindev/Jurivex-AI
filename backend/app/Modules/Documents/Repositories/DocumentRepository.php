@@ -10,7 +10,7 @@ class DocumentRepository implements IDocumentRepository
 {
     public function listForUser(User $user, int $perPage = 15): LengthAwarePaginator
     {
-        $query = Document::where('organization_id', $user->organization_id);
+        $query = Document::with('analysis')->where('organization_id', $user->organization_id);
 
         if ($user->hasRole('staff')) {
             $query->where('uploaded_by', $user->id);
@@ -21,7 +21,8 @@ class DocumentRepository implements IDocumentRepository
 
     public function findById(string $id, string $organizationId): ?Document
     {
-        return Document::where('id', $id)
+        return Document::with('analysis')
+            ->where('id', $id)
             ->where('organization_id', $organizationId)
             ->first();
     }
