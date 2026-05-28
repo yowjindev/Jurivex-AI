@@ -3,16 +3,15 @@
 namespace App\Modules\Documents\Events;
 
 use App\Modules\Documents\Models\Document;
-use App\Modules\Documents\Models\DocumentAnalysis;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class DocumentAnalysisCompleted
+class DocumentAnalysisFailed
 {
     use Dispatchable, SerializesModels;
 
     public function __construct(
-        public readonly Document         $document,
-        public readonly DocumentAnalysis $analysis,
+        public readonly Document $document,
+        public readonly string   $reason,
     ) {}
 }

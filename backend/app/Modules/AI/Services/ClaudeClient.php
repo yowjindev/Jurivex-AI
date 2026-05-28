@@ -6,16 +6,6 @@ use App\Exceptions\AI\AIProviderException;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 
-readonly class ClaudeResponse
-{
-    public function __construct(
-        public string $content,
-        public int    $inputTokens,
-        public int    $outputTokens,
-        public string $model,
-    ) {}
-}
-
 class ClaudeClient
 {
     public function __construct(
