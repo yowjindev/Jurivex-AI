@@ -23,16 +23,22 @@ class ComplianceFlag extends Model
     const SEVERITY_HIGH     = 'high';
     const SEVERITY_CRITICAL = 'critical';
 
+    const SOURCE_AI     = 'ai';
+    const SOURCE_MANUAL = 'manual';
+
     protected $fillable = [
         'organization_id', 'document_id', 'type', 'severity',
         'title', 'description', 'due_date', 'is_resolved',
+        'ai_generated', 'confidence', 'source', 'ai_model', 'explanation',
     ];
 
     protected function casts(): array
     {
         return [
-            'due_date'    => 'date',
-            'is_resolved' => 'boolean',
+            'due_date'     => 'date',
+            'is_resolved'  => 'boolean',
+            'ai_generated' => 'boolean',
+            'confidence'   => 'decimal:4',
         ];
     }
 

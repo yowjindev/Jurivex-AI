@@ -33,6 +33,11 @@ class ComplianceFlagFactory extends Factory
             'description'     => fake()->paragraph(),
             'due_date'        => null,
             'is_resolved'     => false,
+            'ai_generated'    => false,
+            'confidence'      => null,
+            'source'          => null,
+            'ai_model'        => null,
+            'explanation'     => null,
         ];
     }
 
