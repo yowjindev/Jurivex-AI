@@ -13,5 +13,6 @@ readonly class RiskFlagResult
         public string             $description,
         public string             $explanation,
         public float              $confidence,
+        public ?string            $aiModel = null,
     ) {}
 }

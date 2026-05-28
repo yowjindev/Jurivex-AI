@@ -48,6 +48,7 @@ class ComplianceFlagRepository implements IComplianceFlagRepository
             'confidence'      => $flag->confidence,
             'source'          => ComplianceFlag::SOURCE_AI,
             'explanation'     => $flag->explanation,
+            'ai_model'        => $flag->aiModel,
         ]);
     }
 }

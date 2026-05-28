@@ -22,6 +22,7 @@ class ComplianceFlagResource extends JsonResource
             'ai_generated'    => $this->ai_generated,
             'confidence'      => $this->confidence !== null ? (float) $this->confidence : null,
             'source'          => $this->source,
+            'ai_model'        => $this->ai_model,
             'explanation'     => $this->explanation,
             'created_at'      => $this->created_at?->toIso8601String(),
             'updated_at'      => $this->updated_at?->toIso8601String(),
