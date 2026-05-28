@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Modules\Compliance\Http\Resources;
 
 use Illuminate\Http\Request;
@@ -18,6 +19,10 @@ class ComplianceFlagResource extends JsonResource
             'description'     => $this->description,
             'due_date'        => $this->due_date?->toDateString(),
             'is_resolved'     => $this->is_resolved,
+            'ai_generated'    => $this->ai_generated,
+            'confidence'      => $this->confidence !== null ? (float) $this->confidence : null,
+            'source'          => $this->source,
+            'explanation'     => $this->explanation,
             'created_at'      => $this->created_at?->toIso8601String(),
             'updated_at'      => $this->updated_at?->toIso8601String(),
         ];
