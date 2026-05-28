@@ -58,9 +58,28 @@ class PromptLoaderTest extends TestCase
 
     public function test_loads_extract_risks_template(): void
     {
-        $result = $this->loader->load('document.extract_risks', ['content' => 'sample doc']);
+        $result = $this->loader->load('document.extract_risks', [
+            'content'  => 'sample doc',
+            'filename' => 'sample.pdf',
+        ]);
 
         $this->assertStringContainsString('sample doc', $result);
         $this->assertStringNotContainsString('{content}', $result);
+    }
+
+    public function test_extract_risks_prompt_loads_with_filename_and_content_placeholders(): void
+    {
+        $loader = app(\App\Modules\AI\Prompts\Contracts\PromptLoaderContract::class);
+
+        $prompt = $loader->load('document.extract_risks', [
+            'content'  => 'Summary: A lease agreement between Acme Corp and Widget Inc.',
+            'filename' => 'lease_agreement.pdf',
+        ]);
+
+        $this->assertStringContainsString('JSON array', $prompt);
+        $this->assertStringContainsString('lease_agreement.pdf', $prompt);
+        $this->assertStringContainsString('Summary: A lease agreement between Acme Corp and Widget Inc.', $prompt);
+        $this->assertStringNotContainsString('{filename}', $prompt);
+        $this->assertStringNotContainsString('{content}', $prompt);
     }
 }

@@ -36,15 +36,41 @@ Document content:
 PROMPT,
 
     'document.extract_risks' => <<<'PROMPT'
-You are a compliance AI assistant. Review the following document and identify compliance risks.
-For each risk, provide:
-- Type: risk | deadline | alert
-- Severity: low | medium | high | critical
-- Title: brief title (max 80 chars)
-- Description: detailed explanation
+You are a compliance AI assistant specialized in legal document risk analysis.
 
-Document:
+Review the following document analysis summary and identify ALL compliance risks, contractual obligations with deadlines, and general alerts that require legal attention.
+
+Respond ONLY with a valid JSON array. If no risks are found, return an empty array: []
+
+Each element in the array must match this exact schema:
+
+[
+  {
+    "type": "risk | deadline | alert",
+    "severity": "low | medium | high | critical",
+    "title": "string (max 80 chars)",
+    "description": "string (plain-English explanation of the issue)",
+    "explanation": "string (why this matters for compliance and what action is recommended)",
+    "confidence": 0.0
+  }
+]
+
+Field rules:
+- type: "risk" for liability/legal exposure, "deadline" for time-sensitive obligations, "alert" for general compliance concerns
+- severity: "critical" = immediate legal jeopardy; "high" = significant exposure; "medium" = notable concern; "low" = minor or informational
+- title: concise label, max 80 characters
+- description: 1-2 sentences describing the issue in plain English
+- explanation: 2-3 sentences on compliance implications and the recommended next step for the legal team
+- confidence: float 0.0–1.0, your confidence this is a genuine compliance concern
+
+Respond with ONLY the JSON array. No other text.
+
+Document filename: {filename}
+
+Document analysis:
+<analysis>
 {content}
+</analysis>
 PROMPT,
 
     'document.summarize' => <<<'PROMPT'
