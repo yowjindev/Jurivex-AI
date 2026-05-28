@@ -12,15 +12,18 @@ class DocumentAnalysis extends Model
     use HasFactory, HasUuids;
 
     protected $fillable = [
-        'document_id', 'summary', 'key_points',
-        'risk_score', 'ai_model', 'analyzed_at',
+        'document_id', 'summary', 'key_points', 'parties',
+        'governing_law', 'risk_score', 'confidence',
+        'ai_model', 'raw_response', 'analyzed_at',
     ];
 
     protected function casts(): array
     {
         return [
             'key_points'  => 'array',
+            'parties'     => 'array',
             'risk_score'  => 'decimal:4',
+            'confidence'  => 'decimal:4',
             'analyzed_at' => 'datetime',
         ];
     }
