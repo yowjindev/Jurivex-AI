@@ -20,6 +20,7 @@ class Document extends Model
     const STATUS_PROCESSING     = 'processing';   // legacy — kept for backward compat; not in VALID_TRANSITIONS
     const STATUS_OCR_PROCESSING = 'ocr_processing';
     const STATUS_OCR_COMPLETED  = 'ocr_completed';
+    const STATUS_AI_PROCESSING  = 'ai_processing';
     const STATUS_ANALYZED       = 'analyzed';
     const STATUS_FAILED         = 'failed';
 

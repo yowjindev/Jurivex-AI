@@ -51,13 +51,13 @@ class DocumentStatusManagerTest extends TestCase
         $this->assertEquals(Document::STATUS_FAILED, $document->fresh()->status);
     }
 
-    public function test_transitions_ocr_completed_to_analyzed(): void
+    public function test_throws_on_invalid_transition_ocr_completed_to_analyzed(): void
     {
         $document = Document::factory()->create(['status' => Document::STATUS_OCR_COMPLETED]);
 
-        $this->manager->transition($document, Document::STATUS_ANALYZED);
+        $this->expectException(InvalidDocumentTransitionException::class);
 
-        $this->assertEquals(Document::STATUS_ANALYZED, $document->fresh()->status);
+        $this->manager->transition($document, Document::STATUS_ANALYZED);
     }
 
     public function test_transitions_failed_to_ocr_processing_for_retry(): void
@@ -107,6 +107,53 @@ class DocumentStatusManagerTest extends TestCase
         $this->expectException(InvalidDocumentTransitionException::class);
 
         $this->manager->transition($document, Document::STATUS_OCR_PROCESSING);
+    }
+
+    // ── AI analysis flow ──────────────────────────────────────────────────────────
+
+    public function test_transitions_ocr_completed_to_ai_processing(): void
+    {
+        $document = Document::factory()->create(['status' => Document::STATUS_OCR_COMPLETED]);
+
+        $this->manager->transition($document, Document::STATUS_AI_PROCESSING);
+
+        $this->assertEquals(Document::STATUS_AI_PROCESSING, $document->fresh()->status);
+    }
+
+    public function test_transitions_ai_processing_to_analyzed(): void
+    {
+        $document = Document::factory()->create(['status' => Document::STATUS_AI_PROCESSING]);
+
+        $this->manager->transition($document, Document::STATUS_ANALYZED);
+
+        $this->assertEquals(Document::STATUS_ANALYZED, $document->fresh()->status);
+    }
+
+    public function test_transitions_ai_processing_to_failed(): void
+    {
+        $document = Document::factory()->create(['status' => Document::STATUS_AI_PROCESSING]);
+
+        $this->manager->transition($document, Document::STATUS_FAILED);
+
+        $this->assertEquals(Document::STATUS_FAILED, $document->fresh()->status);
+    }
+
+    public function test_transitions_failed_to_ai_processing_for_retry(): void
+    {
+        $document = Document::factory()->create(['status' => Document::STATUS_FAILED]);
+
+        $this->manager->transition($document, Document::STATUS_AI_PROCESSING);
+
+        $this->assertEquals(Document::STATUS_AI_PROCESSING, $document->fresh()->status);
+    }
+
+    public function test_throws_on_invalid_transition_pending_to_ai_processing(): void
+    {
+        $document = Document::factory()->create(['status' => Document::STATUS_PENDING]);
+
+        $this->expectException(InvalidDocumentTransitionException::class);
+
+        $this->manager->transition($document, Document::STATUS_AI_PROCESSING);
     }
 
     // ── canTransition ─────────────────────────────────────────────────────────
