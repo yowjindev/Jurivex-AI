@@ -220,6 +220,16 @@ return [
             'timeout' => 300,
             'tries' => 3,
         ],
+
+        'supervisor-analysis' => [
+            'connection'   => 'redis',
+            'queue'        => ['analysis'],
+            'balance'      => 'simple',
+            'minProcesses' => 1,
+            'maxProcesses' => 2,
+            'timeout'      => 120,
+            'tries'        => 2,
+        ],
     ],
 
     'environments' => [
@@ -234,6 +244,11 @@ return [
                 'minProcesses' => 1,
                 'maxProcesses' => 3,
             ],
+
+            'supervisor-analysis' => [
+                'minProcesses' => 1,
+                'maxProcesses' => 2,
+            ],
         ],
 
         'local' => [
@@ -244,6 +259,11 @@ return [
             'supervisor-ocr' => [
                 'minProcesses' => 1,
                 'maxProcesses' => 3,
+            ],
+
+            'supervisor-analysis' => [
+                'minProcesses' => 1,
+                'maxProcesses' => 2,
             ],
         ],
     ],

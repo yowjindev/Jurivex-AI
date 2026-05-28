@@ -15,7 +15,11 @@ use App\Modules\AI\OCR\Services\OcrService;
 use App\Modules\AI\Pipelines\DocumentAnalysisPipeline;
 use App\Modules\AI\Prompts\Contracts\PromptLoaderContract;
 use App\Modules\AI\Prompts\PromptLoader;
+use App\Modules\AI\Analysis\Listeners\DispatchAIAnalysis;
 use App\Modules\AI\Services\ClaudeClient;
+use App\Modules\AI\Utilities\TextTruncator;
+use App\Modules\Documents\Events\DocumentAnalysisCompleted;
+use App\Modules\Documents\Listeners\LogDocumentAnalysisActivity;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 
@@ -44,11 +48,18 @@ class AIServiceProvider extends ServiceProvider
                 maxTokens: $config['max_tokens'] ?? 4096,
             );
         });
+        $this->app->singleton(TextTruncator::class);
     }
 
     public function boot(): void
     {
         Event::listen(OCRCompleted::class, [LogOCRActivity::class, 'handleCompleted']);
         Event::listen(OCRFailed::class, [LogOCRActivity::class, 'handleFailed']);
+
+        // Analysis dispatch
+        Event::listen(OCRCompleted::class, [DispatchAIAnalysis::class, 'handle']);
+
+        // Analysis completion logging
+        Event::listen(DocumentAnalysisCompleted::class, [LogDocumentAnalysisActivity::class, 'handle']);
     }
 }
