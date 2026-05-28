@@ -63,7 +63,7 @@ class AIAnalysisJob implements ShouldQueue
             }
 
             $result = new AnalysisResult(
-                summary:       (string) ($parsed['summary'] ?? ''),
+                summary:       (string) $parsed['summary'],
                 keyPoints:     (array) ($parsed['key_points'] ?? []),
                 parties:       (array) ($parsed['parties'] ?? []),
                 governingLaw:  isset($parsed['governing_law']) ? (string) $parsed['governing_law'] : null,

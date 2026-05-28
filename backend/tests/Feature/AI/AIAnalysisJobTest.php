@@ -129,5 +129,8 @@ class AIAnalysisJobTest extends TestCase
         } catch (\App\Exceptions\AI\AIAnalysisException $e) {
             $this->assertStringContainsString('No extracted text', $e->getMessage());
         }
+
+        $document->refresh();
+        $this->assertEquals(Document::STATUS_FAILED, $document->status);
     }
 }
