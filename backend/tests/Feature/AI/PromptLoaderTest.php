@@ -19,7 +19,7 @@ class PromptLoaderTest extends TestCase
 
     public function test_loads_known_template(): void
     {
-        $result = $this->loader->load('document.analyze', ['content' => 'test doc']);
+        $result = $this->loader->load('document.analyze', ['filename' => 'test.pdf', 'content' => 'test doc']);
 
         $this->assertStringContainsString('test doc', $result);
         $this->assertStringContainsString('Analyze', $result);
