@@ -49,7 +49,7 @@ export interface Document {
   original_filename: string
   mime_type: string
   file_size: number
-  status: 'pending' | 'processing' | 'ocr_processing' | 'ocr_completed' | 'analyzed' | 'failed'
+  status: 'pending' | 'processing' | 'ocr_processing' | 'ocr_completed' | 'ai_processing' | 'analyzed' | 'failed'
   category: string | null
   tags: string[]
   uploaded_by: string

@@ -18,6 +18,7 @@ export const DOCUMENT_STATUS = {
   PROCESSING: 'processing',
   OCR_PROCESSING: 'ocr_processing',
   OCR_COMPLETED: 'ocr_completed',
+  AI_PROCESSING: 'ai_processing',
   ANALYZED: 'analyzed',
   FAILED: 'failed',
 } as const
