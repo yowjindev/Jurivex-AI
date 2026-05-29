@@ -182,4 +182,31 @@ class ComplianceFlagsApiTest extends TestCase
 
         $this->patchJson("/api/v1/compliance/flags/{$flag->id}/resolve")->assertStatus(401);
     }
+
+    public function test_index_filters_flags_by_document_id_query_param(): void
+    {
+        $org   = Organization::factory()->create();
+        $admin = User::factory()->for($org)->create();
+        $admin->assignRole('admin');
+
+        $doc1 = \App\Modules\Documents\Models\Document::factory()->create(['organization_id' => $org->id]);
+        $doc2 = \App\Modules\Documents\Models\Document::factory()->create(['organization_id' => $org->id]);
+
+        ComplianceFlag::factory()->create([
+            'organization_id' => $org->id,
+            'document_id'     => $doc1->id,
+            'title'           => 'Flag for doc1',
+        ]);
+        ComplianceFlag::factory()->create([
+            'organization_id' => $org->id,
+            'document_id'     => $doc2->id,
+            'title'           => 'Flag for doc2',
+        ]);
+
+        $response = $this->actingAs($admin)->getJson("/api/v1/compliance/flags?document_id={$doc1->id}");
+
+        $response->assertOk();
+        $response->assertJsonCount(1, 'data');
+        $response->assertJsonPath('data.0.title', 'Flag for doc1');
+    }
 }

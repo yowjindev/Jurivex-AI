@@ -13,9 +13,9 @@ class ComplianceService
 {
     public function __construct(private readonly IComplianceFlagRepository $repository) {}
 
-    public function list(User $user): LengthAwarePaginator
+    public function list(User $user, ?string $documentId = null): LengthAwarePaginator
     {
-        return $this->repository->listByOrganization($user->organization_id);
+        return $this->repository->listByOrganization($user->organization_id, 15, $documentId);
     }
 
     public function resolve(string $id, User $user): ComplianceFlag

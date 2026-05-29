@@ -14,7 +14,8 @@ class ComplianceFlagsController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $paginated = $this->complianceService->list($request->user());
+        $documentId = $request->query('document_id') ?: null;
+        $paginated  = $this->complianceService->list($request->user(), $documentId);
 
         return response()->json([
             'success' => true,
