@@ -6,9 +6,19 @@ export function parseApiError(error: unknown): string {
 
   const axiosError = error as AxiosError<ApiError | ValidationError>
   const data = axiosError.response?.data
+  const status = axiosError.response?.status
 
   if (!data) {
     if (axiosError.code === 'ERR_NETWORK') return 'Network error. Check your connection.'
+    if (status === 413) return 'The file is too large for the current upload limit.'
+    return 'An unexpected error occurred.'
+  }
+
+  if (status === 413) {
+    return 'The file is too large for the current upload limit.'
+  }
+
+  if (typeof data !== 'object' || data === null) {
     return 'An unexpected error occurred.'
   }
 
