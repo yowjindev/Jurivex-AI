@@ -18,7 +18,11 @@ class DocumentExtractionRepository implements IDocumentExtractionRepository
                 'page_count'     => $result->pageCount,
                 'word_count'     => $result->wordCount,
                 'char_count'     => $result->charCount,
-                'ocr_engine'     => 'tesseract',
+                'ocr_engine'     => match ($result->extractorType) {
+                    'pdf_text'            => 'pdftotext',
+                    'pdf_ocr', 'image_ocr' => 'tesseract',
+                    default               => 'unknown',
+                },
                 'extractor_type' => $result->extractorType,
                 'confidence'     => $result->confidence,
                 'extracted_at'   => now(),

@@ -69,10 +69,11 @@ class OcrServiceTest extends TestCase
         };
 
         $service = new OcrService([$extractor]);
-        $service->process($document);
+        $result  = $service->process($document);
 
         $this->assertNotNull($extractor->capturedPath);
         $this->assertFileDoesNotExist($extractor->capturedPath);
+        $this->assertSame('text', $result->text);
     }
 
     public function test_upsert_saves_extraction_result_to_database(): void
