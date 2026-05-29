@@ -22,14 +22,20 @@ class PromptLoader implements PromptLoaderContract
 
         $template = $this->templates[$name];
 
-        foreach ($variables as $key => $value) {
-            $template = str_replace("{{$key}}", (string) $value, $template);
+        // Validate against the raw template BEFORE substitution so that {word} patterns
+        // inside document content (e.g. {Grantor}, {Grantee} in legal contracts) never
+        // trigger false-positive "unresolved placeholder" errors.
+        preg_match_all('/\{([a-zA-Z_][a-zA-Z0-9_]*)\}/', $template, $matches);
+        foreach ($matches[1] as $placeholder) {
+            if (! array_key_exists($placeholder, $variables)) {
+                throw new \UnderflowException(
+                    "Prompt template '{$name}' has unresolved placeholder: {{$placeholder}}."
+                );
+            }
         }
 
-        if (preg_match('/\{[a-zA-Z_][a-zA-Z0-9_]*\}/', $template, $matches)) {
-            throw new \UnderflowException(
-                "Prompt template '{$name}' has unresolved placeholder: {$matches[0]}."
-            );
+        foreach ($variables as $key => $value) {
+            $template = str_replace("{{$key}}", (string) $value, $template);
         }
 
         return $template;

@@ -67,6 +67,20 @@ class PromptLoaderTest extends TestCase
         $this->assertStringNotContainsString('{content}', $result);
     }
 
+    public function test_document_content_with_brace_patterns_does_not_throw(): void
+    {
+        // Legal documents often contain {Grantor}, {Grantee} etc. as contract template
+        // placeholders. These are in the *content*, not in the prompt template itself,
+        // so they must never trigger an "unresolved placeholder" error.
+        $result = $this->loader->load('document.analyze', [
+            'filename' => 'contract.pdf',
+            'content'  => 'This agreement is between {Grantor} and {Grantee} effective {Date}.',
+        ]);
+
+        $this->assertStringContainsString('{Grantor}', $result);
+        $this->assertStringContainsString('{Grantee}', $result);
+    }
+
     public function test_extract_risks_prompt_loads_with_filename_and_content_placeholders(): void
     {
         $loader = app(\App\Modules\AI\Prompts\Contracts\PromptLoaderContract::class);
