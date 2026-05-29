@@ -12,7 +12,7 @@ class ComplianceFlagRepository implements IComplianceFlagRepository
 {
     public function listByOrganization(string $organizationId, int $perPage = 15, ?string $documentId = null): LengthAwarePaginator
     {
-        $query = ComplianceFlag::where('organization_id', $organizationId);
+        $query = ComplianceFlag::with('document')->where('organization_id', $organizationId);
 
         if ($documentId !== null) {
             $query->where('document_id', $documentId);
@@ -23,7 +23,7 @@ class ComplianceFlagRepository implements IComplianceFlagRepository
 
     public function findById(string $id, string $organizationId): ?ComplianceFlag
     {
-        return ComplianceFlag::where('id', $id)
+        return ComplianceFlag::with('document')->where('id', $id)
             ->where('organization_id', $organizationId)
             ->first();
     }

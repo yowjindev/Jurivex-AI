@@ -13,6 +13,11 @@ class ComplianceFlagResource extends JsonResource
             'id'              => $this->id,
             'organization_id' => $this->organization_id,
             'document_id'     => $this->document_id,
+            'document'        => $this->whenLoaded('document', fn () => $this->document ? [
+                'id'                => $this->document->id,
+                'title'             => $this->document->title,
+                'original_filename' => $this->document->original_filename,
+            ] : null),
             'type'            => $this->type,
             'severity'        => $this->severity,
             'title'           => $this->title,

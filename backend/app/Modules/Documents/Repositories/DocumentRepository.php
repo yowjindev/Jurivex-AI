@@ -2,6 +2,7 @@
 namespace App\Modules\Documents\Repositories;
 
 use App\Models\User;
+use App\Modules\AI\OCR\Models\DocumentExtractionChunk;
 use App\Modules\Documents\Models\Document;
 use App\Modules\Documents\Repositories\Contracts\IDocumentRepository;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -10,7 +11,15 @@ class DocumentRepository implements IDocumentRepository
 {
     public function listForUser(User $user, int $perPage = 15): LengthAwarePaginator
     {
-        $query = Document::with('analysis')->where('organization_id', $user->organization_id);
+        $query = Document::with('analysis')
+            ->withCount([
+                'chunks as ocr_chunks_total',
+                'chunks as ocr_chunks_completed' => fn ($query) => $query->where('status', DocumentExtractionChunk::STATUS_COMPLETED),
+                'chunks as ocr_chunks_failed' => fn ($query) => $query->where('status', DocumentExtractionChunk::STATUS_FAILED),
+                'chunks as ocr_chunks_processing' => fn ($query) => $query->where('status', DocumentExtractionChunk::STATUS_PROCESSING),
+                'chunks as ocr_chunks_pending' => fn ($query) => $query->where('status', DocumentExtractionChunk::STATUS_PENDING),
+            ])
+            ->where('organization_id', $user->organization_id);
 
         if ($user->hasRole('staff')) {
             $query->where('uploaded_by', $user->id);

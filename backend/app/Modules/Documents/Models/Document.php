@@ -2,6 +2,7 @@
 namespace App\Modules\Documents\Models;
 
 use App\Models\User;
+use App\Modules\AI\OCR\Models\DocumentExtractionChunk;
 use App\Modules\AI\OCR\Models\DocumentExtraction;
 use App\Modules\Organizations\Models\Organization;
 use Database\Factories\DocumentFactory;
@@ -9,6 +10,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -55,6 +57,11 @@ class Document extends Model
     public function extraction(): HasOne
     {
         return $this->hasOne(DocumentExtraction::class);
+    }
+
+    public function chunks(): HasMany
+    {
+        return $this->hasMany(DocumentExtractionChunk::class);
     }
 
     protected static function newFactory(): DocumentFactory

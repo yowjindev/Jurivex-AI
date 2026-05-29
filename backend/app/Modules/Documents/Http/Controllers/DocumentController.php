@@ -6,6 +6,7 @@ use App\Modules\Documents\Http\Requests\UpdateDocumentRequest;
 use App\Modules\Documents\Http\Requests\UploadDocumentRequest;
 use App\Modules\Documents\Http\Resources\DocumentResource;
 use App\Modules\Documents\Services\DocumentService;
+use App\Modules\AI\OCR\Services\DocumentChunkAggregator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -50,7 +51,9 @@ class DocumentController extends Controller
     public function show(Request $request, string $id): JsonResponse
     {
         $document    = $this->documentService->show($id, $request->user());
+        $document->load(['chunks' => fn ($query) => $query->orderBy('chunk_index')]);
         $downloadUrl = $this->documentService->downloadUrl($document);
+        $chunkProgress = app(DocumentChunkAggregator::class)->progress($document);
 
         return response()->json([
             'success' => true,
@@ -59,6 +62,16 @@ class DocumentController extends Controller
                 [
                     'download_url'   => $downloadUrl,
                     'failure_reason' => $this->documentService->latestFailureReason($document),
+                    'ocr_progress'   => $chunkProgress,
+                    'ocr_chunks'     => $document->chunks->map(fn ($chunk) => [
+                        'id'            => $chunk->id,
+                        'chunk_index'   => $chunk->chunk_index,
+                        'page_start'    => $chunk->page_start,
+                        'page_end'      => $chunk->page_end,
+                        'status'        => $chunk->status,
+                        'error_message' => $chunk->error_message,
+                        'processed_at'  => $chunk->processed_at?->toIso8601String(),
+                    ])->values(),
                 ]
             ),
             'message' => 'OK',
