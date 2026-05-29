@@ -53,14 +53,18 @@ Queue::fake();         // for job dispatch tests
 
 **Phase 2A complete** — real OCR extraction is wired.
 **Phase 2B complete** — real AI analysis via Claude is wired.
+**Phase 2C complete** — automated compliance flags from AI analysis are wired.
 
 - `OCRJob` dispatched from `ProcessDocumentJob`, runs on the `ocr` queue via Horizon
 - `AIAnalysisJob` dispatched from `DispatchAIAnalysis` listener (on `OCRCompleted`), runs on `analysis` queue
+- `RiskDetectionJob` dispatched from `DispatchRiskDetection` listener (on `DocumentAnalysisCompleted`), runs on `analysis` queue
 - `OcrService` delegates to `PdfTextExtractor` (pdftotext/GhostScript) or `ImageTextExtractor` (Tesseract)
-- `ClaudeClient` calls Claude Messages API, parses JSON, produces `AnalysisResult`
+- `ClaudeClient` calls Claude Messages API, parses JSON, produces `AnalysisResult` (Phase 2B) and `ComplianceFlag` records (Phase 2C)
 - Extracted text stored via `DocumentExtractionRepository` → `document_extractions` table
 - Analysis stored via `DocumentAnalysisRepository` → `document_analyses` table
+- Compliance flags stored via `ComplianceFlagRepository::createFromAI()` → `compliance_flags` table
 - Status flow: `pending → ocr_processing → ocr_completed → ai_processing → analyzed`
-- Events: `OCRCompleted` → `LogOCRActivity` + `DispatchAIAnalysis`; `DocumentAnalysisCompleted` → `LogDocumentAnalysisActivity`
+- Events: `OCRCompleted` → `LogOCRActivity` + `DispatchAIAnalysis`; `DocumentAnalysisCompleted` → `LogDocumentAnalysisActivity` + `DispatchRiskDetection`
+- RiskDetection failure is non-fatal — document stays `analyzed`, error is logged only
 
-Phase 2C (automated compliance flags from analysis) is not yet implemented.
+Phase 2D (embeddings + semantic search) not yet implemented.
