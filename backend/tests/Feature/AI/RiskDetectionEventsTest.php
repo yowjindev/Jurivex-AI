@@ -42,6 +42,9 @@ class RiskDetectionEventsTest extends TestCase
 
         DocumentAnalysisCompleted::dispatch($document, $analysis);
 
-        Queue::assertPushed(RiskDetectionJob::class, fn ($job) => $job->document->id === $document->id);
+        Queue::assertPushed(RiskDetectionJob::class, fn ($job) =>
+            $job->document->id === $document->id &&
+            $job->analysis->id === $analysis->id
+        );
     }
 }
