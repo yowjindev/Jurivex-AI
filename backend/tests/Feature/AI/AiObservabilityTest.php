@@ -70,4 +70,87 @@ class AiObservabilityTest extends TestCase
         app(TokenBudgetService::class)->check($org->id);
         $this->assertTrue(true);
     }
+
+    public function test_observable_client_creates_ai_request_on_success(): void
+    {
+        $this->seed(RolesAndPermissionsSeeder::class);
+
+        $org      = Organization::factory()->create();
+        $document = Document::factory()->create(['organization_id' => $org->id]);
+
+        $mockClient = $this->mock(AIClientContract::class);
+        $mockClient->shouldReceive('complete')
+            ->once()
+            ->andReturn(new AIResponse('the response', 100, 50, 'gemini-test'));
+
+        $client   = new ObservableAIClient($mockClient, $org->id, $document->id, 'ai_analysis');
+        $response = $client->complete('test prompt');
+
+        $this->assertSame('the response', $response->content);
+        $this->assertDatabaseHas('ai_requests', [
+            'organization_id'   => $org->id,
+            'document_id'       => $document->id,
+            'job_type'          => 'ai_analysis',
+            'model'             => 'gemini-test',
+            'prompt_tokens'     => 100,
+            'completion_tokens' => 50,
+            'total_tokens'      => 150,
+            'status'            => 'success',
+        ]);
+    }
+
+    public function test_observable_client_logs_failure_on_provider_exception(): void
+    {
+        $this->seed(RolesAndPermissionsSeeder::class);
+
+        $org      = Organization::factory()->create();
+        $document = Document::factory()->create(['organization_id' => $org->id]);
+
+        $mockClient = $this->mock(AIClientContract::class);
+        $mockClient->shouldReceive('complete')
+            ->once()
+            ->andThrow(new AIProviderException('API down'));
+
+        $client = new ObservableAIClient($mockClient, $org->id, $document->id, 'ai_analysis');
+
+        try {
+            $client->complete('prompt');
+            $this->fail('Expected AIProviderException');
+        } catch (AIProviderException) {
+            $this->assertDatabaseHas('ai_requests', [
+                'organization_id' => $org->id,
+                'status'          => 'failure',
+                'error_message'   => 'API down',
+            ]);
+        }
+    }
+
+    public function test_observable_client_increments_token_budget(): void
+    {
+        $this->seed(RolesAndPermissionsSeeder::class);
+
+        $org      = Organization::factory()->create();
+        $document = Document::factory()->create(['organization_id' => $org->id]);
+
+        AiTokenBudget::create([
+            'organization_id'      => $org->id,
+            'monthly_token_limit'  => 10_000_000,
+            'current_month_tokens' => 500,
+            'alert_threshold_pct'  => 80,
+            'budget_period_start'  => now()->startOfMonth()->toDateString(),
+        ]);
+
+        $mockClient = $this->mock(AIClientContract::class);
+        $mockClient->shouldReceive('complete')
+            ->once()
+            ->andReturn(new AIResponse('ok', 200, 100, 'test'));
+
+        (new ObservableAIClient($mockClient, $org->id, $document->id, 'ai_analysis'))
+            ->complete('prompt');
+
+        $this->assertDatabaseHas('ai_token_budgets', [
+            'organization_id'      => $org->id,
+            'current_month_tokens' => 800,  // 500 + 200 + 100
+        ]);
+    }
 }
