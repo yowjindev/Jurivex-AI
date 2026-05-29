@@ -3,6 +3,7 @@
 namespace App\Modules\Documents\Services;
 
 use App\Exceptions\Documents\DocumentNotFoundException;
+use App\Exceptions\Documents\DocumentUploadException;
 use App\Exceptions\ForbiddenException;
 use App\Models\User;
 use App\Modules\Auth\Models\AuditLog;
@@ -45,9 +46,17 @@ class DocumentService
     {
         $uuid     = Str::uuid()->toString();
         $filename = $file->getClientOriginalName();
-        $path     = "org/{$user->organization_id}/documents/{$uuid}/{$filename}";
 
-        Storage::disk('s3')->put($path, $file->get());
+        $disk = Storage::disk('s3');
+        $path = $disk->putFileAs(
+            "org/{$user->organization_id}/documents/{$uuid}",
+            $file,
+            $filename
+        );
+
+        if ($path === false) {
+            throw new DocumentUploadException('Document upload failed while writing to storage.');
+        }
 
         $dto = new UploadDocumentDTO(
             title:            pathinfo($filename, PATHINFO_FILENAME),
@@ -100,8 +109,8 @@ class DocumentService
 
     public function delete(Document $document, User $user): void
     {
-        if (! $user->hasAnyRole(['admin', 'manager'])) {
-            throw new ForbiddenException('Only admins and managers can delete documents.');
+        if (! $user->hasAnyRole(['admin', 'manager', 'superadmin'])) {
+            throw new ForbiddenException('Only admins, managers, and superadmins can delete documents.');
         }
 
         AuditLog::create([
@@ -124,5 +133,18 @@ class DocumentService
         } catch (\League\Flysystem\UnableToGenerateTemporaryUrl) {
             return null;
         }
+    }
+
+    public function latestFailureReason(Document $document): ?string
+    {
+        /** @var AuditLog|null $log */
+        $log = AuditLog::query()
+            ->where('action', 'ocr.failed')
+            ->where('auditable_type', 'document')
+            ->where('auditable_id', $document->id)
+            ->latest('created_at')
+            ->first();
+
+        return $log?->metadata['reason'] ?? null;
     }
 }
