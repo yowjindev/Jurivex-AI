@@ -25,6 +25,10 @@ function formatDate(iso: string): string {
   })
 }
 
+function hasOcrProgress(doc: Document): doc is Document & { ocr_progress: NonNullable<Document['ocr_progress']> } {
+  return Boolean(doc.ocr_progress && doc.ocr_progress.total_chunks > 0)
+}
+
 export default function DocumentsPage() {
   const queryClient = useQueryClient()
   const [modalOpen, setModalOpen] = useState(false)
@@ -136,7 +140,23 @@ export default function DocumentsPage() {
                       <span className="text-foreground font-medium truncate max-w-xs hover:underline">{doc.title || doc.original_filename}</span>
                     </Link>
                   </td>
-                  <td className="px-4 py-3"><StatusBadge status={doc.status} /></td>
+                  <td className="px-4 py-3">
+                    <StatusBadge status={doc.status} />
+                    {hasOcrProgress(doc) && doc.ocr_progress.total_chunks > 1 && (
+                      <div className="mt-2 space-y-1.5">
+                        <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                          <span>{doc.ocr_progress.completed_chunks + doc.ocr_progress.failed_chunks + doc.ocr_progress.processing_chunks}/{doc.ocr_progress.total_chunks} chunks</span>
+                          <span>{doc.ocr_progress.progress_percentage.toFixed(0)}%</span>
+                        </div>
+                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                          <div
+                            className="h-full rounded-full bg-primary transition-all"
+                            style={{ width: `${Math.min(100, Math.max(0, doc.ocr_progress.progress_percentage))}%` }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </td>
                   <td className="px-4 py-3 text-muted-foreground">{formatBytes(doc.file_size)}</td>
                   <td className="px-4 py-3 text-muted-foreground">{formatDate(doc.created_at)}</td>
                   <td className="px-4 py-3 text-right">
@@ -175,7 +195,7 @@ export default function DocumentsPage() {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1.5">
-                  File <span className="text-muted-foreground font-normal">(PDF, DOCX, DOC, TXT — max 50 MB)</span>
+                  File <span className="text-muted-foreground font-normal">(PDF, DOCX, DOC, TXT — max 200 MB)</span>
                 </label>
                 <input
                   ref={fileRef}

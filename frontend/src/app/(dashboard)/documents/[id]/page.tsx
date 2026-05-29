@@ -50,6 +50,8 @@ export default function DocumentDetailPage() {
     queryKey: ['compliance', 'flags', id],
     queryFn:  () => listFlags(1, id),
     enabled:  !!id,
+    refetchInterval: () => (document && (isProcessingStatus(document.status) || document.status === 'analyzed') ? 3000 : false),
+    refetchOnWindowFocus: true,
   })
 
   const resolve = useMutation({
@@ -115,6 +117,45 @@ export default function DocumentDetailPage() {
         <div className="rounded-xl border border-destructive/20 bg-destructive/10 p-4">
           <h2 className="text-sm font-semibold text-destructive">Processing failed</h2>
           <p className="mt-1 text-sm text-destructive/90">{document.failure_reason}</p>
+        </div>
+      )}
+
+      {document.ocr_progress && document.ocr_progress.total_chunks > 1 && (
+        <div className="rounded-xl border bg-card p-6 space-y-4">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h2 className="text-sm font-semibold text-foreground">Chunk Progress</h2>
+              <p className="text-xs text-muted-foreground">
+                {document.ocr_progress.completed_chunks}/{document.ocr_progress.total_chunks} chunks complete
+              </p>
+            </div>
+            <span className="text-sm font-medium text-foreground">
+              {document.ocr_progress.progress_percentage.toFixed(0)}%
+            </span>
+          </div>
+          <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+            <div
+              className="h-full rounded-full bg-primary transition-all"
+              style={{ width: `${Math.min(100, document.ocr_progress.progress_percentage)}%` }}
+            />
+          </div>
+          {document.ocr_chunks?.length ? (
+            <div className="grid gap-2 sm:grid-cols-2">
+              {document.ocr_chunks.map((chunk) => (
+                <div key={chunk.id} className="rounded-lg border border-border p-3 text-xs">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-medium text-foreground">
+                      Chunk {chunk.chunk_index + 1} ({chunk.page_start}-{chunk.page_end})
+                    </span>
+                    <span className="text-muted-foreground uppercase">{chunk.status}</span>
+                  </div>
+                  {chunk.error_message && (
+                    <p className="mt-1 text-destructive/90">{chunk.error_message}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : null}
         </div>
       )}
 

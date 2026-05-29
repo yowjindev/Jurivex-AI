@@ -55,6 +55,25 @@ export interface DocumentAnalysis {
   analyzed_at: string
 }
 
+export interface DocumentOcrProgress {
+  total_chunks: number
+  completed_chunks: number
+  failed_chunks: number
+  pending_chunks: number
+  processing_chunks: number
+  progress_percentage: number
+}
+
+export interface DocumentOcrChunk {
+  id: string
+  chunk_index: number
+  page_start: number
+  page_end: number
+  status: 'pending' | 'processing' | 'completed' | 'failed'
+  error_message: string | null
+  processed_at: string | null
+}
+
 export interface Document {
   id: string
   title: string
@@ -68,6 +87,8 @@ export interface Document {
   organization_id: string
   download_url?: string | null
   failure_reason?: string | null
+  ocr_progress?: DocumentOcrProgress | null
+  ocr_chunks?: DocumentOcrChunk[] | null
   analysis?: DocumentAnalysis | null
   created_at: string
   updated_at: string
@@ -77,6 +98,11 @@ export interface ComplianceFlag {
   id: string
   organization_id: string
   document_id: string | null
+  document?: {
+    id: string
+    title: string
+    original_filename: string
+  } | null
   type: string
   severity: 'low' | 'medium' | 'high' | 'critical'
   title: string
