@@ -67,6 +67,7 @@ export interface Document {
   uploaded_by: string
   organization_id: string
   download_url?: string | null
+  failure_reason?: string | null
   analysis?: DocumentAnalysis | null
   created_at: string
   updated_at: string

@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useState, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Upload, FileText, Trash2, X } from 'lucide-react'
@@ -9,6 +10,7 @@ import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { listDocuments, uploadDocument, deleteDocument } from '@/lib/api/documents'
 import { parseApiError } from '@/lib/errors'
+import { useAuthStore } from '@/stores/authStore'
 import type { Document } from '@/types'
 
 function formatBytes(bytes: number): string {
@@ -29,11 +31,19 @@ export default function DocumentsPage() {
   const [file, setFile] = useState<File | null>(null)
   const [category, setCategory] = useState('')
   const [uploadError, setUploadError] = useState('')
+  const [deleteError, setDeleteError] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
+  const user = useAuthStore((s) => s.user)
+  const canDelete = user?.roles.includes('admin')
+    || user?.roles.includes('manager')
+    || user?.roles.includes('superadmin')
 
   const { data, isPending } = useQuery({
     queryKey: ['documents'],
     queryFn: () => listDocuments(),
+    refetchInterval: 3000,
+    refetchIntervalInBackground: true,
+    refetchOnWindowFocus: true,
   })
 
   const upload = useMutation({
@@ -52,7 +62,13 @@ export default function DocumentsPage() {
 
   const remove = useMutation({
     mutationFn: (id: string) => deleteDocument(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['documents'] }),
+    onSuccess: () => {
+      setDeleteError('')
+      queryClient.invalidateQueries({ queryKey: ['documents'] })
+    },
+    onError: (error) => {
+      setDeleteError(parseApiError(error))
+    },
   })
 
   const documents: Document[] = data?.data ?? []
@@ -65,6 +81,7 @@ export default function DocumentsPage() {
           <p className="text-sm text-muted-foreground mt-1">
             {data ? `${data.meta.total} document${data.meta.total !== 1 ? 's' : ''}` : ' '}
           </p>
+          <p className="text-xs text-muted-foreground mt-1">Live updates enabled while this page is open.</p>
         </div>
         <Button onClick={() => setModalOpen(true)} className="flex items-center gap-2">
           <Upload size={15} />
@@ -93,7 +110,13 @@ export default function DocumentsPage() {
       )}
 
       {!isPending && documents.length > 0 && (
-        <div className="rounded-xl border border-border bg-card overflow-hidden">
+        <div className="space-y-3">
+          {deleteError && (
+            <div className="rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm px-4 py-3">
+              {deleteError}
+            </div>
+          )}
+          <div className="rounded-xl border border-border bg-card overflow-hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border">
@@ -108,28 +131,31 @@ export default function DocumentsPage() {
               {documents.map((doc) => (
                 <tr key={doc.id} className="border-b border-border last:border-0 hover:bg-accent/30 transition-colors">
                   <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
+                    <Link href={`/documents/${doc.id}`} className="flex items-center gap-2 rounded-md focus:outline-none focus:ring-2 focus:ring-ring">
                       <FileText size={15} className="text-muted-foreground shrink-0" />
-                      <span className="text-foreground font-medium truncate max-w-xs">{doc.title || doc.original_filename}</span>
-                    </div>
+                      <span className="text-foreground font-medium truncate max-w-xs hover:underline">{doc.title || doc.original_filename}</span>
+                    </Link>
                   </td>
                   <td className="px-4 py-3"><StatusBadge status={doc.status} /></td>
                   <td className="px-4 py-3 text-muted-foreground">{formatBytes(doc.file_size)}</td>
                   <td className="px-4 py-3 text-muted-foreground">{formatDate(doc.created_at)}</td>
                   <td className="px-4 py-3 text-right">
-                    <button
-                      onClick={() => remove.mutate(doc.id)}
-                      disabled={remove.isPending}
-                      title="Delete"
-                      className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors ml-auto"
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                    {canDelete && (
+                      <button
+                        onClick={() => remove.mutate(doc.id)}
+                        disabled={remove.isPending}
+                        title="Delete"
+                        className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors ml-auto disabled:opacity-50"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+        </div>
         </div>
       )}
 

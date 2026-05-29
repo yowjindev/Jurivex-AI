@@ -26,6 +26,10 @@ function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
+function isProcessingStatus(status: string): boolean {
+  return ['pending', 'processing', 'ocr_processing', 'ocr_completed', 'ai_processing'].includes(status)
+}
+
 export default function DocumentDetailPage() {
   const { id } = useParams<{ id: string }>()
   const queryClient = useQueryClient()
@@ -35,6 +39,11 @@ export default function DocumentDetailPage() {
   const { data: document, isPending: docPending, isError: docError } = useQuery({
     queryKey: ['documents', id],
     queryFn:  () => getDocument(id),
+    refetchInterval: (query) => {
+      const document = query.state.data
+      return document && isProcessingStatus(document.status) ? 3000 : false
+    },
+    refetchOnWindowFocus: true,
   })
 
   const { data: flagsData, isPending: flagsPending } = useQuery({
@@ -95,9 +104,19 @@ export default function DocumentDetailPage() {
               <span className="text-xs text-muted-foreground">{formatBytes(document.file_size)}</span>
               <span className="text-xs text-muted-foreground">Uploaded {formatDate(document.created_at)}</span>
             </div>
+            {isProcessingStatus(document.status) && (
+              <p className="text-xs text-muted-foreground mt-2">Checking for status updates every few seconds.</p>
+            )}
           </div>
         </div>
       </div>
+
+      {document.status === 'failed' && document.failure_reason && (
+        <div className="rounded-xl border border-destructive/20 bg-destructive/10 p-4">
+          <h2 className="text-sm font-semibold text-destructive">Processing failed</h2>
+          <p className="mt-1 text-sm text-destructive/90">{document.failure_reason}</p>
+        </div>
+      )}
 
       {/* Analysis panel */}
       {analysis && (
