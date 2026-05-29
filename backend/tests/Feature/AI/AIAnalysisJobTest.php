@@ -4,8 +4,8 @@ namespace Tests\Feature\AI;
 
 use App\Modules\AI\Analysis\Jobs\AIAnalysisJob;
 use App\Modules\AI\Analysis\Repositories\Contracts\IDocumentAnalysisRepository;
-use App\Modules\AI\Services\ClaudeClient;
-use App\Modules\AI\Services\ClaudeResponse;
+use App\Modules\AI\Contracts\AIClientContract;
+use App\Modules\AI\DTOs\AIResponse;
 use App\Modules\Documents\Events\DocumentAnalysisCompleted;
 use App\Modules\Documents\Events\DocumentAnalysisFailed;
 use App\Modules\Documents\Models\Document;
@@ -18,9 +18,9 @@ class AIAnalysisJobTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function fakeClaudeResponse(array $payload): ClaudeResponse
+    private function fakeAIResponse(array $payload): AIResponse
     {
-        return new ClaudeResponse(
+        return new AIResponse(
             content:      json_encode($payload),
             inputTokens:  500,
             outputTokens: 200,
@@ -39,7 +39,7 @@ class AIAnalysisJobTest extends TestCase
             ]), 'extraction')
             ->create(['status' => Document::STATUS_OCR_COMPLETED]);
 
-        $claudeResponse = $this->fakeClaudeResponse([
+        $aiResponse = $this->fakeAIResponse([
             'summary'        => 'A contract between Acme and Widget.',
             'key_points'     => ['Party A pays Party B.'],
             'parties'        => ['Acme Corp', 'Widget Inc'],
@@ -49,7 +49,7 @@ class AIAnalysisJobTest extends TestCase
             'confidence'     => 0.9,
         ]);
 
-        $this->mock(ClaudeClient::class, fn ($m) => $m->shouldReceive('complete')->once()->andReturn($claudeResponse));
+        $this->mock(AIClientContract::class, fn ($m) => $m->shouldReceive('complete')->once()->andReturn($aiResponse));
         $this->mock(IDocumentAnalysisRepository::class, fn ($m) => $m->shouldReceive('upsert')->once()->andReturn(new DocumentAnalysis()));
 
         $job = new AIAnalysisJob($document);
@@ -72,7 +72,7 @@ class AIAnalysisJobTest extends TestCase
             ]), 'extraction')
             ->create(['status' => Document::STATUS_OCR_COMPLETED]);
 
-        $this->mock(ClaudeClient::class, fn ($m) => $m->shouldReceive('complete')->once()
+        $this->mock(AIClientContract::class, fn ($m) => $m->shouldReceive('complete')->once()
             ->andThrow(new \App\Exceptions\AI\AIProviderException('Rate limit exceeded')));
 
         $job = new AIAnalysisJob($document);

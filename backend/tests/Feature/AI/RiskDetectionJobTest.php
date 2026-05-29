@@ -2,9 +2,9 @@
 
 namespace Tests\Feature\AI;
 
+use App\Modules\AI\Contracts\AIClientContract;
+use App\Modules\AI\DTOs\AIResponse;
 use App\Modules\AI\Risk\Jobs\RiskDetectionJob;
-use App\Modules\AI\Services\ClaudeClient;
-use App\Modules\AI\Services\ClaudeResponse;
 use App\Modules\Compliance\Events\ComplianceFlagGenerated;
 use App\Modules\Compliance\Models\ComplianceFlag;
 use App\Modules\Compliance\Repositories\Contracts\IComplianceFlagRepository;
@@ -18,9 +18,9 @@ class RiskDetectionJobTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function fakeClaudeResponse(array $flags): ClaudeResponse
+    private function fakeAIResponse(array $flags): AIResponse
     {
-        return new ClaudeResponse(
+        return new AIResponse(
             content:      json_encode($flags),
             inputTokens:  300,
             outputTokens: 200,
@@ -36,8 +36,8 @@ class RiskDetectionJobTest extends TestCase
         $document = Document::factory()->create(['status' => Document::STATUS_ANALYZED]);
         $analysis = DocumentAnalysis::factory()->create(['document_id' => $document->id]);
 
-        $this->mock(ClaudeClient::class, fn ($m) => $m->shouldReceive('complete')->once()->andReturn(
-            $this->fakeClaudeResponse([[
+        $this->mock(AIClientContract::class, fn ($m) => $m->shouldReceive('complete')->once()->andReturn(
+            $this->fakeAIResponse([[
                 'type'        => 'risk',
                 'severity'    => 'high',
                 'title'       => 'Uncapped liability',
@@ -63,8 +63,8 @@ class RiskDetectionJobTest extends TestCase
         $document = Document::factory()->create(['status' => Document::STATUS_ANALYZED]);
         $analysis = DocumentAnalysis::factory()->create(['document_id' => $document->id]);
 
-        $this->mock(ClaudeClient::class, fn ($m) => $m->shouldReceive('complete')->once()->andReturn(
-            $this->fakeClaudeResponse([
+        $this->mock(AIClientContract::class, fn ($m) => $m->shouldReceive('complete')->once()->andReturn(
+            $this->fakeAIResponse([
                 ['type' => 'risk',     'severity' => 'high',   'title' => 'Flag A', 'description' => 'Desc A', 'explanation' => 'Exp A', 'confidence' => 0.9],
                 ['type' => 'deadline', 'severity' => 'medium', 'title' => 'Flag B', 'description' => 'Desc B', 'explanation' => 'Exp B', 'confidence' => 0.7],
             ])
@@ -87,8 +87,8 @@ class RiskDetectionJobTest extends TestCase
         $document = Document::factory()->create(['status' => Document::STATUS_ANALYZED]);
         $analysis = DocumentAnalysis::factory()->create(['document_id' => $document->id]);
 
-        $this->mock(ClaudeClient::class, fn ($m) => $m->shouldReceive('complete')->once()->andReturn(
-            $this->fakeClaudeResponse([
+        $this->mock(AIClientContract::class, fn ($m) => $m->shouldReceive('complete')->once()->andReturn(
+            $this->fakeAIResponse([
                 ['type' => 'risk'],
                 ['type' => 'alert', 'severity' => 'low', 'title' => 'Valid flag', 'description' => 'Full.', 'explanation' => 'Exp.', 'confidence' => 0.6],
             ])
@@ -110,8 +110,8 @@ class RiskDetectionJobTest extends TestCase
         $document = Document::factory()->create(['status' => Document::STATUS_ANALYZED]);
         $analysis = DocumentAnalysis::factory()->create(['document_id' => $document->id]);
 
-        $this->mock(ClaudeClient::class, fn ($m) => $m->shouldReceive('complete')->once()->andReturn(
-            $this->fakeClaudeResponse([])
+        $this->mock(AIClientContract::class, fn ($m) => $m->shouldReceive('complete')->once()->andReturn(
+            $this->fakeAIResponse([])
         ));
 
         $this->mock(IComplianceFlagRepository::class, fn ($m) => $m->shouldReceive('createFromAI')->never());

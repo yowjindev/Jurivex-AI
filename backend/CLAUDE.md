@@ -59,6 +59,10 @@ Queue::fake();         // for job dispatch tests
 - `AIAnalysisJob` dispatched from `DispatchAIAnalysis` listener (on `OCRCompleted`), runs on `analysis` queue
 - `RiskDetectionJob` dispatched from `DispatchRiskDetection` listener (on `DocumentAnalysisCompleted`), runs on `analysis` queue
 - `OcrService` delegates to `PdfTextExtractor` (pdftotext/GhostScript) or `ImageTextExtractor` (Tesseract)
+- AI provider is swappable: `AI_DRIVER=gemini` (dev/free-tier) or `AI_DRIVER=claude` (production)
+- `GeminiClient` uses Gemini 2.0 Flash free tier; `ClaudeClient` kept for Claude Sonnet/Opus in production
+- Both clients implement `AIClientContract` and return `AIResponse` (unified DTO in `App\Modules\AI\DTOs`)
+- Jobs and tests resolve `AIClientContract::class` from the container — never the concrete client directly
 - `ClaudeClient` calls Claude Messages API, parses JSON, produces `AnalysisResult` (Phase 2B) and `ComplianceFlag` records (Phase 2C)
 - Extracted text stored via `DocumentExtractionRepository` → `document_extractions` table
 - Analysis stored via `DocumentAnalysisRepository` → `document_analyses` table

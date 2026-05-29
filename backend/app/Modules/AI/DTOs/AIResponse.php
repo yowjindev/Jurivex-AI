@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Modules\AI\Services;
+namespace App\Modules\AI\DTOs;
 
-readonly class ClaudeResponse
+readonly class AIResponse
 {
     public function __construct(
         public string $content,

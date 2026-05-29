@@ -6,7 +6,7 @@ use App\Exceptions\AI\AIAnalysisException;
 use App\Modules\AI\Analysis\DTOs\AnalysisResult;
 use App\Modules\AI\Analysis\Repositories\Contracts\IDocumentAnalysisRepository;
 use App\Modules\AI\Prompts\Contracts\PromptLoaderContract;
-use App\Modules\AI\Services\ClaudeClient;
+use App\Modules\AI\Contracts\AIClientContract;
 use App\Modules\AI\Utilities\TextTruncator;
 use App\Modules\Documents\Events\DocumentAnalysisCompleted;
 use App\Modules\Documents\Events\DocumentAnalysisFailed;
@@ -33,7 +33,7 @@ class AIAnalysisJob implements ShouldQueue
 
     public function handle(): void
     {
-        $claude        = app(ClaudeClient::class);
+        $claude        = app(AIClientContract::class);
         $repo          = app(IDocumentAnalysisRepository::class);
         $statusManager = app(DocumentStatusManager::class);
         $promptLoader  = app(PromptLoaderContract::class);

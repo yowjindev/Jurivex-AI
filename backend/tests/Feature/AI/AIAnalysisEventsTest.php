@@ -50,10 +50,10 @@ class AIAnalysisEventsTest extends TestCase
         ]);
     }
 
-    public function test_service_provider_binds_claude_client(): void
+    public function test_service_provider_binds_ai_client_contract(): void
     {
-        $client = $this->app->make(\App\Modules\AI\Services\ClaudeClient::class);
-        $this->assertInstanceOf(\App\Modules\AI\Services\ClaudeClient::class, $client);
+        $client = $this->app->make(\App\Modules\AI\Contracts\AIClientContract::class);
+        $this->assertInstanceOf(\App\Modules\AI\Contracts\AIClientContract::class, $client);
     }
 
     public function test_service_provider_binds_document_analysis_repository(): void

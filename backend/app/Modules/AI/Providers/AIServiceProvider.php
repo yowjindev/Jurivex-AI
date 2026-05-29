@@ -4,6 +4,7 @@ namespace App\Modules\AI\Providers;
 
 use App\Modules\AI\Analysis\Repositories\Contracts\IDocumentAnalysisRepository;
 use App\Modules\AI\Analysis\Repositories\DocumentAnalysisRepository;
+use App\Modules\AI\Contracts\AIClientContract;
 use App\Modules\AI\OCR\Events\OCRCompleted;
 use App\Modules\AI\OCR\Events\OCRFailed;
 use App\Modules\AI\OCR\Listeners\LogOCRActivity;
@@ -18,6 +19,7 @@ use App\Modules\AI\Prompts\PromptLoader;
 use App\Modules\AI\Analysis\Listeners\DispatchAIAnalysis;
 use App\Modules\AI\Risk\Listeners\DispatchRiskDetection;
 use App\Modules\AI\Services\ClaudeClient;
+use App\Modules\AI\Services\GeminiClient;
 use App\Modules\AI\Utilities\TextTruncator;
 use App\Modules\Documents\Events\DocumentAnalysisCompleted;
 use App\Modules\Documents\Listeners\LogDocumentAnalysisActivity;
@@ -41,14 +43,26 @@ class AIServiceProvider extends ServiceProvider
             ]);
         });
 
-        $this->app->singleton(ClaudeClient::class, function () {
-            $config = config('ai.claude');
+        $this->app->singleton(AIClientContract::class, function () {
+            $driver = config('ai.driver', 'claude');
+
+            if ($driver === 'gemini') {
+                $cfg = config('ai.gemini');
+                return new GeminiClient(
+                    apiKey:    $cfg['api_key']    ?? '',
+                    model:     $cfg['model']      ?? 'gemini-2.0-flash',
+                    maxTokens: $cfg['max_tokens'] ?? 4096,
+                );
+            }
+
+            $cfg = config('ai.claude');
             return new ClaudeClient(
-                apiKey:    $config['api_key'] ?? '',
-                model:     $config['model'] ?? 'claude-sonnet-4-6',
-                maxTokens: $config['max_tokens'] ?? 4096,
+                apiKey:    $cfg['api_key']    ?? '',
+                model:     $cfg['model']      ?? 'claude-sonnet-4-6',
+                maxTokens: $cfg['max_tokens'] ?? 4096,
             );
         });
+
         $this->app->singleton(TextTruncator::class);
     }
 

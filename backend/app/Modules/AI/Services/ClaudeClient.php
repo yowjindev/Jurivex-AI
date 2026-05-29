@@ -3,10 +3,12 @@
 namespace App\Modules\AI\Services;
 
 use App\Exceptions\AI\AIProviderException;
+use App\Modules\AI\Contracts\AIClientContract;
+use App\Modules\AI\DTOs\AIResponse;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 
-class ClaudeClient
+class ClaudeClient implements AIClientContract
 {
     public function __construct(
         private string $apiKey,
@@ -14,7 +16,7 @@ class ClaudeClient
         private int    $maxTokens = 4096,
     ) {}
 
-    public function complete(string $prompt): ClaudeResponse
+    public function complete(string $prompt): AIResponse
     {
         try {
             $response = Http::withHeaders([
@@ -38,7 +40,7 @@ class ClaudeClient
 
         $data = $response->json();
 
-        return new ClaudeResponse(
+        return new AIResponse(
             content:      $data['content'][0]['text'],
             inputTokens:  $data['usage']['input_tokens'],
             outputTokens: $data['usage']['output_tokens'],
