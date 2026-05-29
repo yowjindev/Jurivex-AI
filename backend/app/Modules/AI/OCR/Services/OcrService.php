@@ -13,22 +13,54 @@ class OcrService
     /** @param TextExtractorContract[] $extractors */
     public function __construct(private readonly array $extractors) {}
 
+    public function downloadDocument(Document $document): string
+    {
+        $tempPath = sys_get_temp_dir() . '/' . uniqid('ocr_', true) . '_' . basename($document->s3_path);
+        $stream = Storage::disk('s3')->readStream($document->s3_path);
+
+        if ($stream === false) {
+            throw new \RuntimeException('Unable to read uploaded document from storage.');
+        }
+
+        $tempStream = fopen($tempPath, 'w+b');
+
+        if ($tempStream === false) {
+            if (is_resource($stream)) {
+                fclose($stream);
+            }
+            throw new \RuntimeException('Unable to create OCR temp file.');
+        }
+
+        try {
+            stream_copy_to_stream($stream, $tempStream);
+        } finally {
+            if (is_resource($stream)) {
+                fclose($stream);
+            }
+            fclose($tempStream);
+        }
+
+        return $tempPath;
+    }
+
+    public function cleanupTemp(string $tempPath): void
+    {
+        if (file_exists($tempPath)) {
+            unlink($tempPath);
+        }
+    }
+
     public function process(Document $document): ExtractionResult
     {
         $mimeType  = $document->mime_type;
         $extractor = $this->findExtractor($mimeType);
 
-        $tempPath = sys_get_temp_dir() . '/' . uniqid('ocr_', true) . '_' . basename($document->s3_path);
+        $tempPath = $this->downloadDocument($document);
 
         try {
-            $contents = Storage::disk('s3')->get($document->s3_path);
-            file_put_contents($tempPath, $contents);
-
             return $extractor->extract($tempPath);
         } finally {
-            if (file_exists($tempPath)) {
-                unlink($tempPath);
-            }
+            $this->cleanupTemp($tempPath);
         }
     }
 
