@@ -56,7 +56,10 @@ class DocumentController extends Controller
             'success' => true,
             'data'    => array_merge(
                 (new DocumentResource($document))->toArray($request),
-                ['download_url' => $downloadUrl]
+                [
+                    'download_url'   => $downloadUrl,
+                    'failure_reason' => $this->documentService->latestFailureReason($document),
+                ]
             ),
             'message' => 'OK',
             'meta'    => [],
