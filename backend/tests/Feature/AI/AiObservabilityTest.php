@@ -153,4 +153,32 @@ class AiObservabilityTest extends TestCase
             'current_month_tokens' => 800,  // 500 + 200 + 100
         ]);
     }
+
+    public function test_reset_command_zeros_current_month_tokens(): void
+    {
+        $this->seed(RolesAndPermissionsSeeder::class);
+
+        $org1 = Organization::factory()->create();
+        $org2 = Organization::factory()->create();
+
+        AiTokenBudget::create([
+            'organization_id'      => $org1->id,
+            'monthly_token_limit'  => 10_000_000,
+            'current_month_tokens' => 50_000,
+            'alert_threshold_pct'  => 80,
+            'budget_period_start'  => now()->subMonth()->startOfMonth()->toDateString(),
+        ]);
+        AiTokenBudget::create([
+            'organization_id'      => $org2->id,
+            'monthly_token_limit'  => 10_000_000,
+            'current_month_tokens' => 200_000,
+            'alert_threshold_pct'  => 80,
+            'budget_period_start'  => now()->subMonth()->startOfMonth()->toDateString(),
+        ]);
+
+        $this->artisan('ai:reset-monthly-budgets')->assertSuccessful();
+
+        $this->assertDatabaseHas('ai_token_budgets', ['organization_id' => $org1->id, 'current_month_tokens' => 0]);
+        $this->assertDatabaseHas('ai_token_budgets', ['organization_id' => $org2->id, 'current_month_tokens' => 0]);
+    }
 }
