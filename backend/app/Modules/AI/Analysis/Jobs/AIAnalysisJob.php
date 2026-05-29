@@ -7,6 +7,7 @@ use App\Modules\AI\Analysis\DTOs\AnalysisResult;
 use App\Modules\AI\Analysis\Repositories\Contracts\IDocumentAnalysisRepository;
 use App\Modules\AI\Prompts\Contracts\PromptLoaderContract;
 use App\Modules\AI\Contracts\AIClientContract;
+use App\Modules\AI\OCR\Models\DocumentExtractionChunk;
 use App\Modules\AI\Utilities\TextTruncator;
 use App\Modules\Documents\Events\DocumentAnalysisCompleted;
 use App\Modules\Documents\Events\DocumentAnalysisFailed;
@@ -40,20 +41,53 @@ class AIAnalysisJob implements ShouldQueue
         $truncator     = app(TextTruncator::class);
 
         try {
-            $statusManager->transition($this->document, Document::STATUS_AI_PROCESSING);
-
             $this->document->refresh();
-            $extraction = $this->document->extraction;
+            $chunks = $this->document->chunks()->orderBy('chunk_index')->get();
 
-            if (! $extraction?->extracted_text) {
-                throw new AIAnalysisException('No extracted text available for analysis.');
+            if ($this->document->status !== Document::STATUS_AI_PROCESSING) {
+                if ($statusManager->canTransition($this->document, Document::STATUS_AI_PROCESSING)) {
+                    $statusManager->transition($this->document, Document::STATUS_AI_PROCESSING);
+                }
             }
 
-            $text   = $truncator->truncate($extraction->extracted_text);
-            $prompt = $promptLoader->load('document.analyze', [
-                'content'  => $text,
-                'filename' => $this->document->original_filename,
-            ]);
+            if ($chunks->isNotEmpty()) {
+                $allChunkAnalysesCompleted = $chunks->every(
+                    fn (DocumentExtractionChunk $chunk) => $chunk->analysis_status === DocumentExtractionChunk::ANALYSIS_STATUS_COMPLETED
+                );
+
+                if (! $allChunkAnalysesCompleted) {
+                    throw new AIAnalysisException('Chunk analyses are not complete yet.');
+                }
+
+                $completedChunks = $chunks->where('analysis_status', DocumentExtractionChunk::ANALYSIS_STATUS_COMPLETED);
+                $prompt = $promptLoader->load('document.synthesize_analysis', [
+                    'filename' => $this->document->original_filename,
+                    'content'  => json_encode($completedChunks->map(fn (DocumentExtractionChunk $chunk) => [
+                        'chunk_index'   => $chunk->chunk_index,
+                        'page_start'    => $chunk->page_start,
+                        'page_end'      => $chunk->page_end,
+                        'summary'       => $chunk->analysis_summary,
+                        'key_points'    => $chunk->analysis_key_points ?? [],
+                        'parties'       => $chunk->analysis_parties ?? [],
+                        'governing_law' => $chunk->analysis_governing_law,
+                        'effective_date'=> $chunk->analysis_effective_date,
+                        'risk_score'    => $chunk->analysis_risk_score,
+                        'confidence'    => $chunk->analysis_confidence,
+                    ])->values()->all(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+                ]);
+            } else {
+                $extraction = $this->document->extraction;
+
+                if (! $extraction?->extracted_text) {
+                    throw new AIAnalysisException('No extracted text available for analysis.');
+                }
+
+                $text   = $truncator->truncate($extraction->extracted_text);
+                $prompt = $promptLoader->load('document.analyze', [
+                    'content'  => $text,
+                    'filename' => $this->document->original_filename,
+                ]);
+            }
 
             $response = $claude->complete($prompt);
             $parsed   = json_decode($response->content, true, 512, JSON_THROW_ON_ERROR);

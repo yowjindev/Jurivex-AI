@@ -35,6 +35,77 @@ Document content:
 </document>
 PROMPT,
 
+    'document.analyze_chunk' => <<<'PROMPT'
+You are a legal AI assistant specialized in contract and regulatory document analysis.
+
+Analyze the following chunk from a larger legal document and respond ONLY with a valid JSON object matching this exact schema — no preamble, no explanation, no markdown code fences:
+
+{
+  "summary": "string (1-3 sentences describing the chunk and its legal significance)",
+  "key_points": ["string", "string"],
+  "parties": ["string", "string"],
+  "governing_law": "string or null",
+  "effective_date": "string or null (ISO 8601 format, e.g. 2024-01-15)",
+  "risk_score": 0.0,
+  "confidence": 0.0
+}
+
+Field rules:
+- summary: plain English, no legal jargon, 1-3 sentences
+- key_points: 3-8 strings, each a distinct obligation, right, or material term from this chunk
+- parties: full legal names of all named parties only (not generic "the parties")
+- governing_law: the jurisdiction that governs this chunk, or null if not stated
+- effective_date: the date this chunk indicates in ISO 8601 format, or null if not stated
+- risk_score: float from 0.0 (no risk) to 1.0 (extreme risk) based only on this chunk
+- confidence: float from 0.0 to 1.0 — your confidence in this chunk analysis
+
+Respond with ONLY the JSON object. No other text.
+
+Document filename: {filename}
+Chunk page range: {chunk_range}
+
+Chunk content:
+<chunk>
+{content}
+</chunk>
+PROMPT,
+
+    'document.synthesize_analysis' => <<<'PROMPT'
+You are a legal AI assistant specialized in synthesizing chunk-level legal document analyses into one overall document analysis.
+
+You will receive multiple chunk analyses from the same document. Combine them into a single, coherent analysis and respond ONLY with a valid JSON object matching this exact schema — no preamble, no explanation, no markdown code fences:
+
+{
+  "summary": "string (2-4 sentences in plain English describing the full document and what it does)",
+  "key_points": ["string", "string"],
+  "parties": ["string", "string"],
+  "governing_law": "string or null",
+  "effective_date": "string or null (ISO 8601 format, e.g. 2024-01-15)",
+  "risk_score": 0.0,
+  "confidence": 0.0
+}
+
+Field rules:
+- summary: plain English, no legal jargon, 2-4 sentences covering the full document
+- key_points: 5-10 strings, combining the most important points from all chunks, deduplicated where possible
+- parties: full legal names of all named parties only, combined across chunks
+- governing_law: the governing law for the full document, or null if not stated
+- effective_date: the document effective date, or null if not stated
+- risk_score: float from 0.0 (no risk) to 1.0 (extreme risk) assessed across the full document
+- confidence: float from 0.0 to 1.0 — your confidence in the synthesized analysis
+
+When chunk analyses conflict, prefer the most specific and repeated information. Do not invent facts not supported by the chunk analyses.
+
+Respond with ONLY the JSON object. No other text.
+
+Document filename: {filename}
+
+Chunk analyses:
+<chunks>
+{content}
+</chunks>
+PROMPT,
+
     'document.extract_risks' => <<<'PROMPT'
 You are a compliance AI assistant specialized in legal document risk analysis.
 
