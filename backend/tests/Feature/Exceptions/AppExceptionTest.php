@@ -51,7 +51,7 @@ class AppExceptionTest extends TestCase
             ->assertStatus(403)
             ->assertJson([
                 'success' => false,
-                'message' => 'Only admins and managers can delete documents.',
+                'message' => 'Only admins, managers, and superadmins can delete documents.',
             ]);
     }
 

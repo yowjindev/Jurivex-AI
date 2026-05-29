@@ -22,7 +22,7 @@ class OcrJobTest extends TestCase
         $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
         Event::fake([OCRCompleted::class, OCRFailed::class]);
 
-        $document = Document::factory()->create(['status' => Document::STATUS_PENDING]);
+        $document = Document::factory()->create(['status' => Document::STATUS_OCR_PROCESSING]);
         $result   = new ExtractionResult('text content', 2, 2, 12, 'pdf_text', 1.0);
 
         $this->mock(OcrService::class, fn ($mock) => $mock->shouldReceive('process')->once()->andReturn($result));

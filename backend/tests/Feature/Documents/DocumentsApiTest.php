@@ -3,6 +3,7 @@
 namespace Tests\Feature\Documents;
 
 use App\Models\User;
+use App\Modules\Auth\Models\AuditLog;
 use App\Modules\Documents\Jobs\ProcessDocumentJob;
 use App\Modules\Documents\Models\Document;
 use App\Modules\Documents\Models\DocumentAnalysis;
@@ -267,6 +268,32 @@ class DocumentsApiTest extends TestCase
             ->assertJsonPath('data.analysis.risk_score', '0.4200');
     }
 
+    public function test_document_show_includes_latest_failure_reason_when_present(): void
+    {
+        $org      = Organization::factory()->create();
+        $admin    = User::factory()->for($org)->create();
+        $admin->assignRole('admin');
+        $document = Document::factory()->create([
+            'organization_id' => $org->id,
+            'uploaded_by'     => $admin->id,
+            'status'          => Document::STATUS_FAILED,
+        ]);
+
+        AuditLog::create([
+            'organization_id' => $org->id,
+            'user_id'         => null,
+            'action'          => 'ocr.failed',
+            'auditable_type'  => 'document',
+            'auditable_id'    => $document->id,
+            'metadata'        => ['reason' => 'PDF to image conversion produced no pages.'],
+        ]);
+
+        $this->actingAs($admin)
+            ->getJson("/api/v1/documents/{$document->id}")
+            ->assertStatus(200)
+            ->assertJsonPath('data.failure_reason', 'PDF to image conversion produced no pages.');
+    }
+
     // ─── UPDATE ───────────────────────────────────────────────────────────────
 
     public function test_admin_can_update_document_title_and_tags(): void
@@ -320,6 +347,21 @@ class DocumentsApiTest extends TestCase
         $document = Document::factory()->create(['organization_id' => $org->id]);
 
         $this->actingAs($admin)
+            ->deleteJson("/api/v1/documents/{$document->id}")
+            ->assertStatus(200)
+            ->assertJsonPath('success', true);
+
+        $this->assertSoftDeleted('documents', ['id' => $document->id]);
+    }
+
+    public function test_superadmin_can_delete_document(): void
+    {
+        $org        = Organization::factory()->create();
+        $superadmin = User::factory()->for($org)->create();
+        $superadmin->assignRole('superadmin');
+        $document   = Document::factory()->create(['organization_id' => $org->id]);
+
+        $this->actingAs($superadmin)
             ->deleteJson("/api/v1/documents/{$document->id}")
             ->assertStatus(200)
             ->assertJsonPath('success', true);
