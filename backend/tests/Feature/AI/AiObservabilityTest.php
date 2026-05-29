@@ -42,4 +42,32 @@ class AiObservabilityTest extends TestCase
             'created_at', 'updated_at',
         ]));
     }
+
+    public function test_token_budget_service_throws_when_exhausted(): void
+    {
+        $this->seed(RolesAndPermissionsSeeder::class);
+
+        $org = Organization::factory()->create();
+        AiTokenBudget::create([
+            'organization_id'      => $org->id,
+            'monthly_token_limit'  => 1_000,
+            'current_month_tokens' => 1_000,
+            'alert_threshold_pct'  => 80,
+            'budget_period_start'  => now()->startOfMonth()->toDateString(),
+        ]);
+
+        $service = app(TokenBudgetService::class);
+        $this->expectException(AIBudgetExceededException::class);
+        $service->check($org->id);
+    }
+
+    public function test_token_budget_service_passes_when_no_budget_configured(): void
+    {
+        $this->seed(RolesAndPermissionsSeeder::class);
+
+        $org = Organization::factory()->create();
+        // No AiTokenBudget record — should NOT throw
+        app(TokenBudgetService::class)->check($org->id);
+        $this->assertTrue(true);
+    }
 }

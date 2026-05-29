@@ -20,6 +20,7 @@ use App\Modules\AI\Analysis\Listeners\DispatchAIAnalysis;
 use App\Modules\AI\Risk\Listeners\DispatchRiskDetection;
 use App\Modules\AI\Services\ClaudeClient;
 use App\Modules\AI\Services\GeminiClient;
+use App\Modules\AI\Services\TokenBudgetService;
 use App\Modules\AI\Utilities\TextTruncator;
 use App\Modules\Documents\Events\DocumentAnalysisCompleted;
 use App\Modules\Documents\Listeners\LogDocumentAnalysisActivity;
@@ -64,6 +65,7 @@ class AIServiceProvider extends ServiceProvider
         });
 
         $this->app->singleton(TextTruncator::class);
+        $this->app->singleton(TokenBudgetService::class);
     }
 
     public function boot(): void
