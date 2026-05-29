@@ -7,8 +7,11 @@ use App\Modules\AI\OCR\DTOs\ExtractionResult;
 use App\Modules\AI\OCR\Events\OCRCompleted;
 use App\Modules\AI\OCR\Events\OCRFailed;
 use App\Modules\AI\OCR\Listeners\LogOCRActivity;
+use App\Modules\AI\OCR\Models\DocumentExtractionChunk;
 use App\Modules\Documents\Models\Document;
+use Illuminate\Bus\PendingBatch;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Bus;
 use Tests\TestCase;
 
 class OcrEventsTest extends TestCase
@@ -60,6 +63,7 @@ class OcrEventsTest extends TestCase
     public function test_ocr_completed_event_is_dispatched_and_listener_fires(): void
     {
         $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
+        Bus::fake();
         $document = Document::factory()->create();
         $result   = new ExtractionResult('hello', 1, 1, 5, 'image_ocr', 0.85);
 
@@ -69,6 +73,28 @@ class OcrEventsTest extends TestCase
             'action'       => 'ocr.completed',
             'auditable_id' => $document->id,
         ]);
+    }
+
+    public function test_ocr_completed_event_batches_chunk_analysis_for_chunked_documents(): void
+    {
+        $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
+        Bus::fake();
+
+        $document = Document::factory()->create(['status' => Document::STATUS_OCR_COMPLETED]);
+        DocumentExtractionChunk::factory()->count(2)->sequence(
+            ['document_id' => $document->id, 'chunk_index' => 0, 'status' => DocumentExtractionChunk::STATUS_COMPLETED, 'analysis_status' => DocumentExtractionChunk::ANALYSIS_STATUS_PENDING],
+            ['document_id' => $document->id, 'chunk_index' => 1, 'status' => DocumentExtractionChunk::STATUS_COMPLETED, 'analysis_status' => DocumentExtractionChunk::ANALYSIS_STATUS_PENDING],
+        )->create();
+
+        OCRCompleted::dispatch($document, new ExtractionResult('hello', 1, 1, 5, 'image_ocr', 0.85));
+
+        Bus::assertBatched(function (PendingBatch $batch) use ($document): bool {
+            $this->assertCount(2, $batch->jobs);
+            $this->assertInstanceOf(\App\Modules\AI\Analysis\Jobs\AIChunkAnalysisJob::class, $batch->jobs[0]);
+            $this->assertInstanceOf(\App\Modules\AI\Analysis\Jobs\AIChunkAnalysisJob::class, $batch->jobs[1]);
+
+            return true;
+        });
     }
 
     public function test_service_provider_binds_ocr_service(): void

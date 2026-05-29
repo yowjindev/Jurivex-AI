@@ -6,11 +6,14 @@ use App\Modules\AI\OCR\DTOs\ExtractionResult;
 use App\Modules\AI\OCR\Events\OCRCompleted;
 use App\Modules\AI\OCR\Events\OCRFailed;
 use App\Modules\AI\OCR\Jobs\OCRJob;
+use App\Modules\AI\OCR\Jobs\OCRChunkJob;
 use App\Modules\AI\OCR\Repositories\Contracts\IDocumentExtractionRepository;
 use App\Modules\AI\OCR\Services\OcrService;
+use App\Modules\AI\OCR\Parsers\PdfTextExtractor;
 use App\Modules\Documents\Models\Document;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class OcrJobTest extends TestCase
@@ -21,20 +24,23 @@ class OcrJobTest extends TestCase
     {
         $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
         Event::fake([OCRCompleted::class, OCRFailed::class]);
+        Queue::fake();
 
         $document = Document::factory()->create(['status' => Document::STATUS_OCR_PROCESSING]);
         $result   = new ExtractionResult('text content', 2, 2, 12, 'pdf_text', 1.0);
 
-        $this->mock(OcrService::class, fn ($mock) => $mock->shouldReceive('process')->once()->andReturn($result));
+        $this->mock(OcrService::class, fn ($mock) => $mock->shouldReceive('downloadDocument')->once()->andReturn('/tmp/doc.pdf')->shouldReceive('process')->once()->andReturn($result)->shouldReceive('cleanupTemp')->atLeast()->once());
+        $this->mock(PdfTextExtractor::class, fn ($mock) => $mock->shouldReceive('pageCount')->once()->andReturn(2));
         $this->mock(IDocumentExtractionRepository::class, fn ($mock) => $mock->shouldReceive('upsert')->once());
 
         $job = new OCRJob($document);
-        $job->handle();
+        app()->call([$job, 'handle']);
 
         $document->refresh();
         $this->assertEquals(Document::STATUS_OCR_COMPLETED, $document->status);
         Event::assertDispatched(OCRCompleted::class);
         Event::assertNotDispatched(OCRFailed::class);
+        Queue::assertNothingPushed();
     }
 
     public function test_handle_transitions_to_failed_and_rethrows_on_exception(): void
@@ -44,13 +50,14 @@ class OcrJobTest extends TestCase
 
         $document = Document::factory()->create(['status' => Document::STATUS_PENDING]);
 
-        $this->mock(OcrService::class, fn ($mock) => $mock->shouldReceive('process')->once()->andThrow(new \RuntimeException('OCR error')));
+        $this->mock(OcrService::class, fn ($mock) => $mock->shouldReceive('downloadDocument')->once()->andReturn('/tmp/doc.pdf')->shouldReceive('process')->once()->andThrow(new \RuntimeException('OCR error'))->shouldReceive('cleanupTemp')->atLeast()->once());
+        $this->mock(PdfTextExtractor::class, fn ($mock) => $mock->shouldReceive('pageCount')->once()->andReturn(2));
         $this->mock(IDocumentExtractionRepository::class);
 
         $job = new OCRJob($document);
 
         try {
-            $job->handle();
+            app()->call([$job, 'handle']);
             $this->fail('Expected RuntimeException was not thrown');
         } catch (\RuntimeException $e) {
             $this->assertEquals('OCR error', $e->getMessage());
@@ -58,9 +65,7 @@ class OcrJobTest extends TestCase
 
         $document->refresh();
         $this->assertEquals(Document::STATUS_FAILED, $document->status);
-        // OCRFailed is dispatched only from failed(), not from handle() catch —
-        // this prevents double-dispatch on the final retry
-        Event::assertNotDispatched(OCRFailed::class);
+        Event::assertDispatched(OCRFailed::class);
         Event::assertNotDispatched(OCRCompleted::class);
     }
 
@@ -86,5 +91,30 @@ class OcrJobTest extends TestCase
 
         $this->assertEquals(3, $job->tries);
         $this->assertEquals(300, $job->timeout);
+    }
+
+    public function test_large_pdf_is_split_into_chunk_jobs(): void
+    {
+        $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
+        Queue::fake();
+
+        $document = Document::factory()->create([
+            'status'     => Document::STATUS_OCR_PROCESSING,
+            'mime_type'  => 'application/pdf',
+            'file_size'  => 178_800_000,
+            's3_path'    => 'org/test/documents/test.pdf',
+        ]);
+
+        $this->mock(OcrService::class, fn ($mock) => $mock->shouldReceive('downloadDocument')->once()->andReturn('/tmp/doc.pdf')->shouldReceive('cleanupTemp')->atLeast()->once());
+        $this->mock(PdfTextExtractor::class, fn ($mock) => $mock->shouldReceive('pageCount')->once()->andReturn(25));
+        $this->mock(IDocumentExtractionRepository::class);
+
+        $job = new OCRJob($document);
+        app()->call([$job, 'handle']);
+
+        $this->assertDatabaseCount('document_extraction_chunks', 3);
+        Queue::assertPushed(OCRChunkJob::class, 3);
+        $document->refresh();
+        $this->assertEquals(Document::STATUS_OCR_PROCESSING, $document->status);
     }
 }

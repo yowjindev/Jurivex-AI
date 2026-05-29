@@ -4,6 +4,7 @@ namespace Tests\Feature\Documents;
 
 use App\Models\User;
 use App\Modules\Auth\Models\AuditLog;
+use App\Modules\AI\OCR\Models\DocumentExtractionChunk;
 use App\Modules\Documents\Jobs\ProcessDocumentJob;
 use App\Modules\Documents\Models\Document;
 use App\Modules\Documents\Models\DocumentAnalysis;
@@ -103,6 +104,41 @@ class DocumentsApiTest extends TestCase
             ->assertJsonStructure(['meta' => ['current_page', 'per_page', 'total', 'last_page']]);
     }
 
+    public function test_list_response_includes_chunk_progress_summary_when_present(): void
+    {
+        $org      = Organization::factory()->create();
+        $admin    = User::factory()->for($org)->create();
+        $admin->assignRole('admin');
+        $document = Document::factory()->create([
+            'organization_id' => $org->id,
+            'uploaded_by'     => $admin->id,
+            'status'          => Document::STATUS_OCR_PROCESSING,
+        ]);
+
+        DocumentExtractionChunk::factory()->create([
+            'document_id' => $document->id,
+            'chunk_index' => 0,
+            'page_start'  => 1,
+            'page_end'    => 10,
+            'status'      => DocumentExtractionChunk::STATUS_COMPLETED,
+        ]);
+        DocumentExtractionChunk::factory()->create([
+            'document_id' => $document->id,
+            'chunk_index' => 1,
+            'page_start'  => 11,
+            'page_end'    => 20,
+            'status'      => DocumentExtractionChunk::STATUS_PROCESSING,
+        ]);
+
+        $this->actingAs($admin)
+            ->getJson('/api/v1/documents')
+            ->assertStatus(200)
+            ->assertJsonPath('data.0.ocr_progress.total_chunks', 2)
+            ->assertJsonPath('data.0.ocr_progress.completed_chunks', 1)
+            ->assertJsonPath('data.0.ocr_progress.processing_chunks', 1)
+            ->assertJsonPath('data.0.ocr_progress.progress_percentage', 50);
+    }
+
     // ─── UPLOAD ───────────────────────────────────────────────────────────────
 
     public function test_any_role_can_upload_a_document(): void
@@ -159,13 +195,13 @@ class DocumentsApiTest extends TestCase
             ->assertJsonValidationErrors(['file']);
     }
 
-    public function test_upload_rejects_files_over_50mb(): void
+    public function test_upload_rejects_files_over_200mb(): void
     {
         $org   = Organization::factory()->create();
         $staff = User::factory()->for($org)->create();
         $staff->assignRole('staff');
 
-        $file = UploadedFile::fake()->create('huge.pdf', 52000, 'application/pdf');
+        $file = UploadedFile::fake()->create('huge.pdf', 204801, 'application/pdf');
 
         $this->actingAs($staff)
             ->postJson('/api/v1/documents', ['file' => $file])
@@ -292,6 +328,52 @@ class DocumentsApiTest extends TestCase
             ->getJson("/api/v1/documents/{$document->id}")
             ->assertStatus(200)
             ->assertJsonPath('data.failure_reason', 'PDF to image conversion produced no pages.');
+    }
+
+    public function test_document_show_includes_chunk_progress_when_present(): void
+    {
+        $org      = Organization::factory()->create();
+        $admin    = User::factory()->for($org)->create();
+        $admin->assignRole('admin');
+        $document = Document::factory()->create([
+            'organization_id' => $org->id,
+            'uploaded_by'     => $admin->id,
+            'status'          => Document::STATUS_OCR_PROCESSING,
+        ]);
+
+        DocumentExtractionChunk::factory()->create([
+            'document_id'   => $document->id,
+            'chunk_index'   => 0,
+            'page_start'    => 1,
+            'page_end'      => 10,
+            'status'        => DocumentExtractionChunk::STATUS_COMPLETED,
+            'extracted_text'=> 'chunk one',
+        ]);
+        DocumentExtractionChunk::factory()->create([
+            'document_id' => $document->id,
+            'chunk_index' => 1,
+            'page_start'  => 11,
+            'page_end'    => 20,
+            'status'      => DocumentExtractionChunk::STATUS_PROCESSING,
+        ]);
+        DocumentExtractionChunk::factory()->create([
+            'document_id' => $document->id,
+            'chunk_index' => 2,
+            'page_start'  => 21,
+            'page_end'    => 30,
+            'status'      => DocumentExtractionChunk::STATUS_PENDING,
+        ]);
+
+        $this->actingAs($admin)
+            ->getJson("/api/v1/documents/{$document->id}")
+            ->assertStatus(200)
+            ->assertJsonPath('data.ocr_progress.total_chunks', 3)
+            ->assertJsonPath('data.ocr_progress.completed_chunks', 1)
+            ->assertJsonPath('data.ocr_progress.processing_chunks', 1)
+            ->assertJsonPath('data.ocr_progress.pending_chunks', 1)
+            ->assertJsonPath('data.ocr_progress.progress_percentage', 33.33)
+            ->assertJsonPath('data.ocr_chunks.0.chunk_index', 0)
+            ->assertJsonPath('data.ocr_chunks.1.chunk_index', 1);
     }
 
     // ─── UPDATE ───────────────────────────────────────────────────────────────
