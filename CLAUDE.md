@@ -34,8 +34,11 @@ See `docs/conventions.md` for full detail. Key rules:
 3. **Events for cross-module side effects** — never call another module's service directly for async work
 4. **PromptLoader for all prompts** — no hardcoded strings in jobs/services
 5. **TDD** — write failing test, implement, verify pass, commit
-6. **Never add Co-Authored-By trailers to git commits**
-7. **Diary, plans, .claude/, .superpowers/ stay local only** — never push to GitHub
+6. **Single Responsibility** — each class/module has one reason to change (services don't touch the DB directly, repositories don't contain business logic)
+7. **Open/Closed** — extend behaviour via new events/listeners/jobs, not by modifying existing handlers
+8. **Liskov Substitution** — repository implementations are interchangeable behind their contracts
+9. **Interface Segregation** — keep contracts focused (`IDocumentRepository` is not also a search repository)
+10. **Dependency Inversion** — services and jobs depend on interfaces, never concrete implementations
 
 ## Tech Stack Gotchas
 
