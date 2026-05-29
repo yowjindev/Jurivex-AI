@@ -211,7 +211,7 @@ export default function DocumentDetailPage() {
               {canResolve && !flag.is_resolved && (
                 <button
                   onClick={() => { if (resolve.isPending) return; resolve.mutate(flag.id) }}
-                  disabled={resolve.isPending}
+                  disabled={resolve.isPending && resolve.variables === flag.id}
                   className="shrink-0 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent transition-colors disabled:opacity-50"
                 >
                   {resolve.isPending && resolve.variables === flag.id ? 'Resolving…' : 'Resolve'}
