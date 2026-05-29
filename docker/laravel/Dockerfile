@@ -33,6 +33,8 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
+COPY uploads.ini /usr/local/etc/php/conf.d/uploads.ini
+
 EXPOSE 9000
 
 CMD ["php-fpm"]
