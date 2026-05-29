@@ -54,11 +54,12 @@ export default function CompliancePage() {
           </p>
         </div>
 
-        <div className="flex gap-1 rounded-lg border border-border p-1 text-xs">
+        <div role="group" aria-label="Filter by source" className="flex gap-1 rounded-lg border border-border p-1 text-xs">
           {(['all', 'ai', 'manual'] as SourceFilter[]).map((s) => (
             <button
               key={s}
               onClick={() => setSourceFilter(s)}
+              aria-pressed={sourceFilter === s}
               className={`px-3 py-1 rounded-md font-medium transition-colors ${
                 sourceFilter === s
                   ? 'bg-primary text-primary-foreground'
@@ -88,7 +89,13 @@ export default function CompliancePage() {
         <EmptyState
           icon={ShieldAlert}
           title="No compliance flags"
-          description="Flags will appear here once AI analysis detects compliance issues."
+          description={
+            sourceFilter === 'ai'
+              ? 'No AI-detected flags found.'
+              : sourceFilter === 'manual'
+                ? 'No manually created flags found.'
+                : 'Flags will appear here once AI analysis detects compliance issues.'
+          }
         />
       )}
 
