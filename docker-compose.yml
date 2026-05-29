@@ -90,6 +90,20 @@ services:
       - "9001:9001"
     restart: unless-stopped
 
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      until mc alias set local http://minio:9000 ${MINIO_ROOT_USER:-minioadmin} ${MINIO_ROOT_PASSWORD:-minioadmin}; do
+        sleep 1;
+      done;
+      mc mb -p local/jurivexai || true;
+      mc anonymous set private local/jurivexai || true;
+      "
+    restart: "no"
+
 volumes:
   postgres_data:
   minio_data:
