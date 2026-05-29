@@ -16,6 +16,7 @@ use App\Modules\AI\Pipelines\DocumentAnalysisPipeline;
 use App\Modules\AI\Prompts\Contracts\PromptLoaderContract;
 use App\Modules\AI\Prompts\PromptLoader;
 use App\Modules\AI\Analysis\Listeners\DispatchAIAnalysis;
+use App\Modules\AI\Risk\Listeners\DispatchRiskDetection;
 use App\Modules\AI\Services\ClaudeClient;
 use App\Modules\AI\Utilities\TextTruncator;
 use App\Modules\Documents\Events\DocumentAnalysisCompleted;
@@ -61,5 +62,6 @@ class AIServiceProvider extends ServiceProvider
 
         // Analysis completion logging
         Event::listen(DocumentAnalysisCompleted::class, [LogDocumentAnalysisActivity::class, 'handle']);
+        Event::listen(DocumentAnalysisCompleted::class, [DispatchRiskDetection::class, 'handle']);
     }
 }
