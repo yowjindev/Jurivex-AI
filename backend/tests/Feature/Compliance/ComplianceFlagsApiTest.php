@@ -3,6 +3,7 @@ namespace Tests\Feature\Compliance;
 
 use App\Models\User;
 use App\Modules\Compliance\Models\ComplianceFlag;
+use App\Modules\Documents\Models\Document;
 use App\Modules\Organizations\Models\Organization;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -189,8 +190,8 @@ class ComplianceFlagsApiTest extends TestCase
         $admin = User::factory()->for($org)->create();
         $admin->assignRole('admin');
 
-        $doc1 = \App\Modules\Documents\Models\Document::factory()->create(['organization_id' => $org->id]);
-        $doc2 = \App\Modules\Documents\Models\Document::factory()->create(['organization_id' => $org->id]);
+        $doc1 = Document::factory()->create(['organization_id' => $org->id]);
+        $doc2 = Document::factory()->create(['organization_id' => $org->id]);
 
         ComplianceFlag::factory()->create([
             'organization_id' => $org->id,
@@ -208,5 +209,6 @@ class ComplianceFlagsApiTest extends TestCase
         $response->assertOk();
         $response->assertJsonCount(1, 'data');
         $response->assertJsonPath('data.0.title', 'Flag for doc1');
+        $response->assertJsonMissing(['title' => 'Flag for doc2']);
     }
 }

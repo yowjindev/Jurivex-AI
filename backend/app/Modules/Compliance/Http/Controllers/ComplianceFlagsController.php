@@ -14,7 +14,8 @@ class ComplianceFlagsController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $documentId = $request->query('document_id') ?: null;
+        $request->validate(['document_id' => 'nullable|uuid']);
+        $documentId = $request->filled('document_id') ? $request->string('document_id')->toString() : null;
         $paginated  = $this->complianceService->list($request->user(), $documentId);
 
         return response()->json([
