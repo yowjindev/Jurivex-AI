@@ -8,6 +8,8 @@ use App\Modules\AI\Analysis\Repositories\Contracts\IDocumentAnalysisRepository;
 use App\Modules\AI\Prompts\Contracts\PromptLoaderContract;
 use App\Modules\AI\Contracts\AIClientContract;
 use App\Modules\AI\OCR\Models\DocumentExtractionChunk;
+use App\Modules\AI\Services\ObservableAIClient;
+use App\Modules\AI\Services\TokenBudgetService;
 use App\Modules\AI\Utilities\TextTruncator;
 use App\Modules\Documents\Events\DocumentAnalysisCompleted;
 use App\Modules\Documents\Events\DocumentAnalysisFailed;
@@ -34,7 +36,14 @@ class AIAnalysisJob implements ShouldQueue
 
     public function handle(): void
     {
-        $claude        = app(AIClientContract::class);
+        app(TokenBudgetService::class)->check($this->document->organization_id);
+
+        $claude        = new ObservableAIClient(
+            app(AIClientContract::class),
+            $this->document->organization_id,
+            $this->document->id,
+            'ai_analysis',
+        );
         $repo          = app(IDocumentAnalysisRepository::class);
         $statusManager = app(DocumentStatusManager::class);
         $promptLoader  = app(PromptLoaderContract::class);

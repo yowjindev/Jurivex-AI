@@ -5,6 +5,8 @@ namespace App\Modules\AI\Risk\Jobs;
 use App\Modules\AI\Prompts\Contracts\PromptLoaderContract;
 use App\Modules\AI\Risk\DTOs\RiskFlagResult;
 use App\Modules\AI\Contracts\AIClientContract;
+use App\Modules\AI\Services\ObservableAIClient;
+use App\Modules\AI\Services\TokenBudgetService;
 use App\Modules\Compliance\Enums\ComplianceFlagType;
 use App\Modules\Compliance\Events\ComplianceFlagGenerated;
 use App\Modules\Compliance\Repositories\Contracts\IComplianceFlagRepository;
@@ -34,7 +36,14 @@ class RiskDetectionJob implements ShouldQueue
 
     public function handle(): void
     {
-        $claude       = app(AIClientContract::class);
+        app(TokenBudgetService::class)->check($this->document->organization_id);
+
+        $claude       = new ObservableAIClient(
+            app(AIClientContract::class),
+            $this->document->organization_id,
+            $this->document->id,
+            'risk_detection',
+        );
         $promptLoader = app(PromptLoaderContract::class);
         $repo         = app(IComplianceFlagRepository::class);
 

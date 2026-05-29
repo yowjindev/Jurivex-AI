@@ -7,6 +7,8 @@ use App\Modules\AI\Analysis\DTOs\AnalysisResult;
 use App\Modules\AI\Analysis\Repositories\Contracts\IDocumentAnalysisRepository;
 use App\Modules\AI\Contracts\AIClientContract;
 use App\Modules\AI\OCR\Models\DocumentExtractionChunk;
+use App\Modules\AI\Services\ObservableAIClient;
+use App\Modules\AI\Services\TokenBudgetService;
 use App\Modules\AI\Prompts\Contracts\PromptLoaderContract;
 use App\Modules\Documents\Events\DocumentAnalysisFailed;
 use App\Modules\Documents\Models\Document;
@@ -48,7 +50,14 @@ class AIChunkAnalysisJob implements ShouldQueue
             throw new AIAnalysisException('No extracted text available for chunk analysis.');
         }
 
-        $claude       = app(AIClientContract::class);
+        app(TokenBudgetService::class)->check($document->organization_id);
+
+        $claude       = new ObservableAIClient(
+            app(AIClientContract::class),
+            $document->organization_id,
+            $document->id,
+            'chunk_analysis',
+        );
         $promptLoader = app(PromptLoaderContract::class);
 
         try {
