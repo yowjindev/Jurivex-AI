@@ -43,6 +43,18 @@ export interface PaginatedApiResponse<T> {
   meta: PaginationMeta
 }
 
+export interface DocumentAnalysis {
+  summary: string
+  key_points: string[]
+  parties: string[]
+  governing_law: string | null
+  effective_date: string | null
+  risk_score: number
+  confidence: number
+  ai_model: string
+  analyzed_at: string
+}
+
 export interface Document {
   id: string
   title: string
@@ -55,6 +67,7 @@ export interface Document {
   uploaded_by: string
   organization_id: string
   download_url?: string | null
+  analysis?: DocumentAnalysis | null
   created_at: string
   updated_at: string
 }
@@ -69,6 +82,10 @@ export interface ComplianceFlag {
   description: string
   due_date: string | null
   is_resolved: boolean
+  ai_generated: boolean
+  confidence: number | null
+  source: string | null
+  explanation: string | null
   created_at: string
   updated_at: string
 }

@@ -21,3 +21,9 @@ export function uploadDocument(file: File, category?: string) {
 export function deleteDocument(id: string) {
   return api.delete<ApiResponse<null>>(`/api/v1/documents/${id}`).then((r) => r.data)
 }
+
+export function getDocument(id: string) {
+  return api
+    .get<ApiResponse<Document>>(`/api/v1/documents/${id}`)
+    .then((r) => r.data.data)
+}
