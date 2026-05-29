@@ -34,13 +34,19 @@ class OCRJob implements ShouldQueue
         $statusManager = app(DocumentStatusManager::class);
 
         try {
-            $statusManager->transition($this->document, Document::STATUS_OCR_PROCESSING);
             $result = $ocrService->process($this->document);
             $repo->upsert($this->document->id, $result);
             $statusManager->transition($this->document, Document::STATUS_OCR_COMPLETED);
             OCRCompleted::dispatch($this->document, $result);
         } catch (Throwable $e) {
-            $statusManager->transition($this->document, Document::STATUS_FAILED);
+            $document = Document::query()->find($this->document->id);
+            if ($document && $document->status !== Document::STATUS_FAILED) {
+                if ($statusManager->canTransition($document, Document::STATUS_FAILED)) {
+                    $statusManager->transition($document, Document::STATUS_FAILED);
+                } else {
+                    $document->update(['status' => Document::STATUS_FAILED]);
+                }
+            }
             throw $e;
         }
     }

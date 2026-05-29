@@ -45,13 +45,23 @@ class PdfTextExtractor implements TextExtractorContract
 
         try {
             $prefix = $tempDir . '/page';
-            Process::run(['pdftoppm', '-r', '200', '-png', $filePath, $prefix]);
+            $conversion = Process::run(['pdftoppm', '-r', '200', '-png', $filePath, $prefix]);
+
+            if ($conversion->failed()) {
+                $error = trim($conversion->errorOutput());
+                throw new OcrFailedException(
+                    $error !== '' ? "PDF to image conversion failed: {$error}" : 'PDF to image conversion failed.'
+                );
+            }
 
             $pages = glob($prefix . '-*.png') ?: [];
             sort($pages);
 
             if (empty($pages)) {
-                throw new OcrFailedException('PDF to image conversion produced no pages.');
+                $error = trim($conversion->errorOutput());
+                throw new OcrFailedException(
+                    $error !== '' ? "PDF to image conversion produced no pages: {$error}" : 'PDF to image conversion produced no pages.'
+                );
             }
 
             $texts = [];
