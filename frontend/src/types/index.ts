@@ -160,3 +160,36 @@ export interface SearchResult {
   score: number          // 0.0–1.0
   chunk_index: number
 }
+
+export interface Conversation {
+  id: string
+  document_id: string
+  message_count: number
+  created_at: string
+  updated_at: string
+}
+
+export interface CitedChunk {
+  chunk_id: string
+  excerpt: string
+  chunk_index: number
+  score: number
+}
+
+export interface ConversationMessage {
+  id: string
+  role: 'user' | 'assistant'
+  content: string
+  cited_chunks: CitedChunk[] | null
+  created_at: string
+}
+
+export interface ChatReply {
+  conversation_id: string
+  message_id: string
+  content: string
+  cited_chunks: CitedChunk[]
+  prompt_tokens: number
+  completion_tokens: number
+  model: string
+}
