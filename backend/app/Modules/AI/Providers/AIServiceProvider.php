@@ -88,6 +88,7 @@ class AIServiceProvider extends ServiceProvider
             \App\Modules\AI\Embeddings\Repositories\SearchRepository::class,
         );
         $this->app->singleton(\App\Modules\AI\Embeddings\Services\SemanticSearchService::class);
+        $this->app->singleton(\App\Modules\Documents\Services\ChatService::class);
     }
 
     public function boot(): void
