@@ -93,13 +93,28 @@ class OCRJob implements ShouldQueue
         $ranges = $chunkPlanner->plan($pageCount);
 
         foreach ($ranges as $range) {
-            $chunk = DocumentExtractionChunk::create([
-                'document_id' => $document->id,
-                'chunk_index' => $range['chunk_index'],
-                'page_start'  => $range['page_start'],
-                'page_end'    => $range['page_end'],
-                'status'      => DocumentExtractionChunk::STATUS_PENDING,
-            ]);
+            $chunk = DocumentExtractionChunk::updateOrCreate(
+                [
+                    'document_id' => $document->id,
+                    'chunk_index' => $range['chunk_index'],
+                ],
+                [
+                    'page_start'             => $range['page_start'],
+                    'page_end'               => $range['page_end'],
+                    'status'                 => DocumentExtractionChunk::STATUS_PENDING,
+                    // Reset OCR output so the chunk is re-extracted on retry
+                    'extracted_text'         => null,
+                    'word_count'             => null,
+                    'char_count'             => null,
+                    'extractor_type'         => null,
+                    'confidence'             => null,
+                    'error_message'          => null,
+                    'processed_at'           => null,
+                    // Reset analysis state so it is re-analysed after OCR
+                    'analysis_status'        => DocumentExtractionChunk::ANALYSIS_STATUS_PENDING,
+                    'analysis_error_message' => null,
+                ]
+            );
 
             OCRChunkJob::dispatch($document, $chunk);
         }
