@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Modules\Documents\Models\DocumentConversation;
 
 class Document extends Model
 {
@@ -68,6 +69,11 @@ class Document extends Model
     public function documentChunks(): HasMany
     {
         return $this->hasMany(DocumentChunk::class);
+    }
+
+    public function conversations(): HasMany
+    {
+        return $this->hasMany(DocumentConversation::class);
     }
 
     protected static function newFactory(): DocumentFactory
