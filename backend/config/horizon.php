@@ -249,6 +249,17 @@ return [
                 'minProcesses' => 1,
                 'maxProcesses' => 2,
             ],
+
+            'supervisor-embeddings' => [
+                'connection'   => 'redis',
+                'queue'        => ['embeddings'],
+                'balance'      => 'auto',
+                'processes'    => 2,
+                'minProcesses' => 1,
+                'maxProcesses' => 4,
+                'tries'        => 3,
+                'timeout'      => 60,
+            ],
         ],
 
         'local' => [
@@ -264,6 +275,17 @@ return [
             'supervisor-analysis' => [
                 'minProcesses' => 1,
                 'maxProcesses' => 2,
+            ],
+
+            'supervisor-embeddings' => [
+                'connection'   => 'redis',
+                'queue'        => ['embeddings'],
+                'balance'      => 'auto',
+                'processes'    => 2,
+                'minProcesses' => 1,
+                'maxProcesses' => 4,
+                'tries'        => 3,
+                'timeout'      => 60,
             ],
         ],
     ],

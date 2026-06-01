@@ -95,5 +95,6 @@ class AIServiceProvider extends ServiceProvider
         // Analysis completion logging
         Event::listen(DocumentAnalysisCompleted::class, [LogDocumentAnalysisActivity::class, 'handle']);
         Event::listen(DocumentAnalysisCompleted::class, [DispatchRiskDetection::class, 'handle']);
+        Event::listen(DocumentAnalysisCompleted::class, [\App\Modules\AI\Embeddings\Listeners\DispatchEmbedding::class, 'handle']);
     }
 }

@@ -12,6 +12,7 @@ use App\Modules\Organizations\Models\Organization;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class EmbeddingJobTest extends TestCase
@@ -116,5 +117,23 @@ class EmbeddingJobTest extends TestCase
         $doc = Document::factory()->make();
         $job = new EmbeddingJob($doc);
         $this->assertSame('embeddings', $job->queue);
+    }
+
+    public function test_document_analysis_completed_dispatches_embedding_job(): void
+    {
+        $this->seed(RolesAndPermissionsSeeder::class);
+        Queue::fake();
+
+        $org      = Organization::factory()->create();
+        $doc      = Document::factory()->create(['organization_id' => $org->id]);
+        $analysis = \App\Modules\Documents\Models\DocumentAnalysis::factory()->create([
+            'document_id' => $doc->id,
+        ]);
+
+        \App\Modules\Documents\Events\DocumentAnalysisCompleted::dispatch($doc, $analysis);
+
+        Queue::assertPushed(EmbeddingJob::class, fn ($job) =>
+            $job->document->id === $doc->id
+        );
     }
 }
