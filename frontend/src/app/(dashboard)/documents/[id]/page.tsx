@@ -34,7 +34,7 @@ export default function DocumentDetailPage() {
   const { id } = useParams<{ id: string }>()
   const queryClient = useQueryClient()
   const user = useAuthStore((s) => s.user)
-  const canResolve = user?.roles.includes('admin') || user?.roles.includes('manager')
+  const canResolve = user?.roles.includes('admin') || user?.roles.includes('manager') || user?.roles.includes('superadmin')
 
   const { data: document, isPending: docPending, isError: docError } = useQuery({
     queryKey: ['documents', id],

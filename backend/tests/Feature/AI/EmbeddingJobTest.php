@@ -66,7 +66,7 @@ class EmbeddingJobTest extends TestCase
             'extracted_at'   => now(),
         ]);
 
-        $fakeVector = array_fill(0, 768, 0.1);
+        $fakeVector = array_fill(0, 3072, 0.1);
         $mockClient = $this->mock(\App\Modules\AI\Contracts\EmbeddingClientContract::class);
         $mockClient->shouldReceive('embed')->andReturn($fakeVector);
         $mockClient->shouldReceive('getModel')->andReturn('text-embedding-004');

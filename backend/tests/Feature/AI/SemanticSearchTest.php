@@ -50,7 +50,7 @@ class SemanticSearchTest extends TestCase
     /** 768-element float array for test vectors. */
     private function fakeVector(float $value = 0.1): array
     {
-        return array_fill(0, 768, $value);
+        return array_fill(0, 3072, $value);
     }
 
     public function test_search_returns_relevant_chunks(): void

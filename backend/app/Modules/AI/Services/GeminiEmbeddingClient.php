@@ -11,7 +11,7 @@ class GeminiEmbeddingClient implements EmbeddingClientContract
 {
     public function __construct(
         private string $apiKey,
-        private string $model = 'text-embedding-004',
+        private string $model = 'gemini-embedding-001',
     ) {}
 
     public function embed(string $text): array
@@ -47,7 +47,7 @@ class GeminiEmbeddingClient implements EmbeddingClientContract
 
     public function getDimensions(): int
     {
-        return 768;
+        return (int) config('ai.embedding.gemini.dimensions', 3072);
     }
 
     public function getModel(): string

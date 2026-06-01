@@ -20,8 +20,8 @@ return [
         'driver' => env('AI_EMBEDDING_DRIVER', 'gemini'),
         'gemini' => [
             'api_key'    => env('GEMINI_API_KEY'),
-            'model'      => env('GEMINI_EMBEDDING_MODEL', 'text-embedding-004'),
-            'dimensions' => 768,
+            'model'      => env('GEMINI_EMBEDDING_MODEL', 'gemini-embedding-001'),
+            'dimensions' => 3072,
         ],
     ],
 ];

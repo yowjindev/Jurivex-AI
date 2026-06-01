@@ -27,7 +27,7 @@ type FlagGroup = {
 export default function CompliancePage() {
   const queryClient = useQueryClient()
   const user = useAuthStore((s) => s.user)
-  const canResolve = user?.roles.includes('admin') || user?.roles.includes('manager')
+  const canResolve = user?.roles.includes('admin') || user?.roles.includes('manager') || user?.roles.includes('superadmin')
 
   const { data, isPending, isError } = useQuery({
     queryKey: ['compliance', 'flags'],
