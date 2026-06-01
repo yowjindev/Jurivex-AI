@@ -86,8 +86,10 @@ class AIAnalysisJobTest extends TestCase
             $this->assertSame('Rate limit exceeded', $e->getMessage());
         }
 
+        // Transient error — document reverts to ocr_completed so the job can be retried.
+        // It only becomes 'failed' after all retries are exhausted (via failed()).
         $document->refresh();
-        $this->assertEquals(Document::STATUS_FAILED, $document->status);
+        $this->assertEquals(Document::STATUS_OCR_COMPLETED, $document->status);
         Event::assertNotDispatched(DocumentAnalysisFailed::class);
     }
 
@@ -111,7 +113,7 @@ class AIAnalysisJobTest extends TestCase
         $document = Document::factory()->make();
         $job      = new AIAnalysisJob($document);
 
-        $this->assertEquals(2, $job->tries);
+        $this->assertEquals(5, $job->tries);
         $this->assertEquals(120, $job->timeout);
     }
 
@@ -132,8 +134,9 @@ class AIAnalysisJobTest extends TestCase
             $this->assertStringContainsString('No extracted text', $e->getMessage());
         }
 
+        // Reverts to ocr_completed so the job can be retried.
         $document->refresh();
-        $this->assertEquals(Document::STATUS_FAILED, $document->status);
+        $this->assertEquals(Document::STATUS_OCR_COMPLETED, $document->status);
     }
 
     public function test_handle_synthesizes_from_chunk_analyses_when_chunks_exist(): void
@@ -262,8 +265,9 @@ class AIAnalysisJobTest extends TestCase
             $this->assertSame('Chunk analyses are not complete yet.', $e->getMessage());
         }
 
+        // Reverts to ocr_completed for retry — only fails permanently after all tries exhaust.
         $document->refresh();
-        $this->assertEquals(Document::STATUS_FAILED, $document->status);
+        $this->assertEquals(Document::STATUS_OCR_COMPLETED, $document->status);
         Event::assertNotDispatched(DocumentAnalysisCompleted::class);
         Event::assertNotDispatched(DocumentAnalysisFailed::class);
     }

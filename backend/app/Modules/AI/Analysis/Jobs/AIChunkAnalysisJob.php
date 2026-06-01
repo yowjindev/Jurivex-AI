@@ -3,6 +3,7 @@
 namespace App\Modules\AI\Analysis\Jobs;
 
 use App\Exceptions\AI\AIAnalysisException;
+use App\Exceptions\AI\AIBudgetExceededException;
 use App\Modules\AI\Analysis\DTOs\AnalysisResult;
 use App\Modules\AI\Analysis\Repositories\Contracts\IDocumentAnalysisRepository;
 use App\Modules\AI\Contracts\AIClientContract;
@@ -24,8 +25,14 @@ class AIChunkAnalysisJob implements ShouldQueue
 {
     use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $tries = 2;
+    public $tries   = 5;
     public $timeout = 120;
+
+    /** Seconds to wait between retries: 10s, 30s, 60s, 120s */
+    public function backoff(): array
+    {
+        return [10, 30, 60, 120];
+    }
 
     public function __construct(
         public readonly Document $document,
@@ -104,26 +111,42 @@ class AIChunkAnalysisJob implements ShouldQueue
                 'analysis_raw_response'   => $result->rawResponse,
                 'analyzed_at'             => now(),
             ]);
-        } catch (Throwable $e) {
+        } catch (AIBudgetExceededException $e) {
+            // Non-retryable — budget exhausted, fail immediately without consuming retries
             $chunk->update([
                 'analysis_status'        => DocumentExtractionChunk::ANALYSIS_STATUS_FAILED,
                 'analysis_error_message' => $e->getMessage(),
             ]);
-
             Document::where('id', $document->id)->update(['status' => Document::STATUS_FAILED]);
-            DocumentAnalysisFailed::dispatch($document, "Chunk {$chunk->chunk_index} analysis failed: {$e->getMessage()}");
+            DocumentAnalysisFailed::dispatch($document, "Budget exceeded: {$e->getMessage()}");
+            $this->fail($e);
+            return;
+        } catch (Throwable $e) {
+            // Transient error — reset chunk to pending so retries can proceed.
+            // Do NOT mark the document as failed yet; failed() handles that after all retries exhaust.
+            $chunk->update([
+                'analysis_status'        => DocumentExtractionChunk::ANALYSIS_STATUS_PENDING,
+                'analysis_error_message' => "Attempt {$this->attempts()}: {$e->getMessage()}",
+            ]);
             throw $e;
         }
     }
 
     public function failed(Throwable $e): void
     {
-        $document = Document::query()->find($this->document->id);
-        if ($document === null || $document->status === Document::STATUS_FAILED) {
-            return;
+        // All retries exhausted — now mark everything as failed
+        $chunk = DocumentExtractionChunk::query()->find($this->chunk->id);
+        if ($chunk) {
+            $chunk->update([
+                'analysis_status'        => DocumentExtractionChunk::ANALYSIS_STATUS_FAILED,
+                'analysis_error_message' => $e->getMessage(),
+            ]);
         }
 
-        Document::where('id', $document->id)->update(['status' => Document::STATUS_FAILED]);
-        DocumentAnalysisFailed::dispatch($this->document, $e->getMessage());
+        $document = Document::query()->find($this->document->id);
+        if ($document !== null && $document->status !== Document::STATUS_FAILED) {
+            Document::where('id', $document->id)->update(['status' => Document::STATUS_FAILED]);
+            DocumentAnalysisFailed::dispatch($this->document, "Chunk {$this->chunk->chunk_index} failed after all retries: {$e->getMessage()}");
+        }
     }
 }

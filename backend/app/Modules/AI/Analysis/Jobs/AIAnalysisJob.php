@@ -3,6 +3,7 @@
 namespace App\Modules\AI\Analysis\Jobs;
 
 use App\Exceptions\AI\AIAnalysisException;
+use App\Exceptions\AI\AIBudgetExceededException;
 use App\Modules\AI\Analysis\DTOs\AnalysisResult;
 use App\Modules\AI\Analysis\Repositories\Contracts\IDocumentAnalysisRepository;
 use App\Modules\AI\Prompts\Contracts\PromptLoaderContract;
@@ -26,8 +27,13 @@ class AIAnalysisJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $tries   = 2;
+    public $tries   = 5;
     public $timeout = 120;
+
+    public function backoff(): array
+    {
+        return [10, 30, 60, 120];
+    }
 
     public function __construct(public readonly Document $document)
     {
@@ -123,14 +129,23 @@ class AIAnalysisJob implements ShouldQueue
 
             DocumentAnalysisCompleted::dispatch($this->document, $analysis);
 
-        } catch (Throwable $e) {
+        } catch (AIBudgetExceededException $e) {
+            // Non-retryable — fail immediately
             $statusManager->transition($this->document, Document::STATUS_FAILED);
+            DocumentAnalysisFailed::dispatch($this->document, "Budget exceeded: {$e->getMessage()}");
+            $this->fail($e);
+            return;
+        } catch (Throwable $e) {
+            // Transient error — revert status so the next retry can re-enter ai_processing.
+            // Do NOT dispatch DocumentAnalysisFailed yet; failed() handles that after all retries.
+            Document::where('id', $this->document->id)->update(['status' => Document::STATUS_OCR_COMPLETED]);
             throw $e;
         }
     }
 
     public function failed(Throwable $e): void
     {
+        // All retries exhausted
         Document::where('id', $this->document->id)->update(['status' => Document::STATUS_FAILED]);
         DocumentAnalysisFailed::dispatch($this->document, $e->getMessage());
     }
