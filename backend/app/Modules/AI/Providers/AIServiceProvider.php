@@ -82,6 +82,12 @@ class AIServiceProvider extends ServiceProvider
             \App\Modules\AI\Embeddings\Repositories\DocumentChunkRepository::class,
         );
         $this->app->singleton(\App\Modules\AI\Embeddings\Services\ChunkingService::class);
+
+        $this->app->singleton(
+            \App\Modules\AI\Embeddings\Repositories\Contracts\ISearchRepository::class,
+            \App\Modules\AI\Embeddings\Repositories\SearchRepository::class,
+        );
+        $this->app->singleton(\App\Modules\AI\Embeddings\Services\SemanticSearchService::class);
     }
 
     public function boot(): void
