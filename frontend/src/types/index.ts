@@ -150,3 +150,13 @@ export interface ApiError {
 export type DocumentStatus = typeof DOCUMENT_STATUS[keyof typeof DOCUMENT_STATUS]
 export type ComplianceSeverity = typeof COMPLIANCE_SEVERITY[keyof typeof COMPLIANCE_SEVERITY]
 export type ComplianceType = typeof COMPLIANCE_TYPE[keyof typeof COMPLIANCE_TYPE]
+
+export interface SearchResult {
+  chunk_id: string
+  document_id: string
+  document_title: string
+  original_filename: string
+  chunk_text: string
+  score: number          // 0.0–1.0
+  chunk_index: number
+}

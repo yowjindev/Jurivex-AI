@@ -1,5 +1,5 @@
 import api from './client'
-import type { ApiResponse, Document, PaginatedApiResponse } from '@/types'
+import type { ApiResponse, Document, PaginatedApiResponse, SearchResult } from '@/types'
 
 export function listDocuments(page = 1) {
   return api
@@ -26,4 +26,12 @@ export function getDocument(id: string) {
   return api
     .get<ApiResponse<Document>>(`/api/v1/documents/${id}`)
     .then((r) => r.data.data)
+}
+
+export function searchDocuments(query: string, limit = 10) {
+  return api
+    .get<ApiResponse<SearchResult[]>>('/api/v1/documents/search', {
+      params: { q: query, limit },
+    })
+    .then((r) => r.data)
 }
