@@ -10,9 +10,10 @@ return [
     ],
 
     'gemini' => [
-        'api_key'    => env('GEMINI_API_KEY'),
-        'model'      => env('GEMINI_MODEL', 'gemini-2.0-flash'),
-        'max_tokens' => (int) env('GEMINI_MAX_TOKENS', 4096),
+        'api_key'             => env('GEMINI_API_KEY'),
+        'model'               => env('GEMINI_MODEL', 'gemini-2.0-flash'),
+        'max_tokens'          => (int) env('GEMINI_MAX_TOKENS', 4096),
+        'requests_per_minute' => (int) env('GEMINI_RPM', 5),
     ],
 
     'embedding' => [

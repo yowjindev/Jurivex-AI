@@ -34,11 +34,24 @@ class DispatchAIAnalysis
             $statusManager->transition($document, Document::STATUS_AI_PROCESSING);
         }
 
-        $jobs = $chunks
+        // Stagger dispatch times to stay within the AI provider's RPM limit.
+        // interval = ceil(60 / RPM) seconds between each chunk job.
+        $rpm      = (int) config('ai.gemini.requests_per_minute', 5);
+        $interval = (int) ceil(60 / max(1, $rpm));
+
+        $pendingChunks = $chunks
             ->where('status', DocumentExtractionChunk::STATUS_COMPLETED)
             ->where('analysis_status', '!=', DocumentExtractionChunk::ANALYSIS_STATUS_COMPLETED)
-            ->map(fn (DocumentExtractionChunk $chunk) => new AIChunkAnalysisJob($document, $chunk))
-            ->values()
+            ->values();
+
+        $jobs = $pendingChunks
+            ->map(function (DocumentExtractionChunk $chunk, int $index) use ($document, $interval) {
+                $job = new AIChunkAnalysisJob($document, $chunk);
+                if ($index > 0) {
+                    $job->delay(now()->addSeconds($index * $interval));
+                }
+                return $job;
+            })
             ->all();
 
         if ($jobs === []) {
