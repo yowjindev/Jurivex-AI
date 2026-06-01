@@ -136,9 +136,9 @@ class AIAnalysisJob implements ShouldQueue
             $this->fail($e);
             return;
         } catch (Throwable $e) {
-            // Transient error — revert status so the next retry can re-enter ai_processing.
-            // Do NOT dispatch DocumentAnalysisFailed yet; failed() handles that after all retries.
-            Document::where('id', $this->document->id)->update(['status' => Document::STATUS_OCR_COMPLETED]);
+            // Transient error — keep document at ai_processing so Horizon shows clean retries
+            // without status thrashing between ai_processing and ocr_completed.
+            // failed() handles the final failure after all retries are exhausted.
             throw $e;
         }
     }
