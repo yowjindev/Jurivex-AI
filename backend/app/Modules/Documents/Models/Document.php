@@ -2,6 +2,7 @@
 namespace App\Modules\Documents\Models;
 
 use App\Models\User;
+use App\Modules\AI\Embeddings\Models\DocumentChunk;
 use App\Modules\AI\OCR\Models\DocumentExtractionChunk;
 use App\Modules\AI\OCR\Models\DocumentExtraction;
 use App\Modules\Organizations\Models\Organization;
@@ -62,6 +63,11 @@ class Document extends Model
     public function chunks(): HasMany
     {
         return $this->hasMany(DocumentExtractionChunk::class);
+    }
+
+    public function documentChunks(): HasMany
+    {
+        return $this->hasMany(DocumentChunk::class);
     }
 
     protected static function newFactory(): DocumentFactory

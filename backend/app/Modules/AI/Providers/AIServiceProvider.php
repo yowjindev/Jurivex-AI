@@ -76,6 +76,12 @@ class AIServiceProvider extends ServiceProvider
                 model:  $cfg['model']  ?? 'text-embedding-004',
             );
         });
+
+        $this->app->singleton(
+            \App\Modules\AI\Embeddings\Repositories\Contracts\IDocumentChunkRepository::class,
+            \App\Modules\AI\Embeddings\Repositories\DocumentChunkRepository::class,
+        );
+        $this->app->singleton(\App\Modules\AI\Embeddings\Services\ChunkingService::class);
     }
 
     public function boot(): void
