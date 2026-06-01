@@ -2,14 +2,14 @@
 
 import { useParams } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { FileText, Bot, ShieldAlert, CheckCircle, ArrowLeft } from 'lucide-react'
+import { FileText, Bot, ShieldAlert, CheckCircle, ArrowLeft, RefreshCw } from 'lucide-react'
 import Link from 'next/link'
 import { useAuthStore } from '@/stores/authStore'
 import { StatusBadge } from '@/components/documents/StatusBadge'
 import { SeverityBadge } from '@/components/compliance/SeverityBadge'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { ErrorState } from '@/components/shared/ErrorState'
-import { getDocument } from '@/lib/api/documents'
+import { getDocument, retryDocument } from '@/lib/api/documents'
 import { listFlags, resolveFlag } from '@/lib/api/compliance'
 import type { ComplianceFlag } from '@/types'
 
@@ -57,6 +57,11 @@ export default function DocumentDetailPage() {
   const resolve = useMutation({
     mutationFn: (flagId: string) => resolveFlag(flagId),
     onSuccess:  () => queryClient.invalidateQueries({ queryKey: ['compliance', 'flags', id] }),
+  })
+
+  const retry = useMutation({
+    mutationFn: () => retryDocument(id),
+    onSuccess:  () => queryClient.invalidateQueries({ queryKey: ['documents', id] }),
   })
 
   const flags: ComplianceFlag[] = flagsData?.data ?? []
@@ -113,10 +118,27 @@ export default function DocumentDetailPage() {
         </div>
       </div>
 
-      {document.status === 'failed' && document.failure_reason && (
+      {document.status === 'failed' && (
         <div className="rounded-xl border border-destructive/20 bg-destructive/10 p-4">
-          <h2 className="text-sm font-semibold text-destructive">Processing failed</h2>
-          <p className="mt-1 text-sm text-destructive/90">{document.failure_reason}</p>
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h2 className="text-sm font-semibold text-destructive">Processing failed</h2>
+              {document.failure_reason && (
+                <p className="mt-1 text-sm text-destructive/90">{document.failure_reason}</p>
+              )}
+            </div>
+            <button
+              onClick={() => retry.mutate()}
+              disabled={retry.isPending}
+              className="flex shrink-0 items-center gap-1.5 rounded-lg bg-destructive/15 px-3 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/25 transition-colors disabled:opacity-50"
+            >
+              <RefreshCw size={12} className={retry.isPending ? 'animate-spin' : ''} />
+              {retry.isPending ? 'Retrying…' : 'Retry'}
+            </button>
+          </div>
+          {retry.isError && (
+            <p className="mt-2 text-xs text-destructive">{String(retry.error)}</p>
+          )}
         </div>
       )}
 

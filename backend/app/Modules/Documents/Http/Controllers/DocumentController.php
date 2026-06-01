@@ -108,4 +108,17 @@ class DocumentController extends Controller
             'meta'    => [],
         ]);
     }
+
+    public function retry(Request $request, string $id): JsonResponse
+    {
+        $document = $this->documentService->show($id, $request->user());
+        $document = $this->documentService->retry($document, $request->user());
+
+        return response()->json([
+            'success' => true,
+            'data'    => new DocumentResource($document),
+            'message' => 'Document queued for reprocessing.',
+            'meta'    => [],
+        ]);
+    }
 }

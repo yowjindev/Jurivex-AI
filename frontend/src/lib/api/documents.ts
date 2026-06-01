@@ -28,6 +28,12 @@ export function getDocument(id: string) {
     .then((r) => r.data.data)
 }
 
+export function retryDocument(id: string) {
+  return api
+    .post<ApiResponse<Document>>(`/api/v1/documents/${id}/retry`)
+    .then((r) => r.data.data)
+}
+
 export function searchDocuments(query: string, limit = 10) {
   return api
     .get<ApiResponse<SearchResult[]>>('/api/v1/documents/search', {

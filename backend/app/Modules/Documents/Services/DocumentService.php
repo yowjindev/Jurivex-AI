@@ -126,6 +126,30 @@ class DocumentService
         $this->documentRepository->delete($document);
     }
 
+    public function retry(Document $document, User $user): Document
+    {
+        if ($document->status !== Document::STATUS_FAILED) {
+            throw new \App\Exceptions\ForbiddenException('Only failed documents can be retried.');
+        }
+
+        $statusManager = app(DocumentStatusManager::class);
+        $statusManager->transition($document, Document::STATUS_PENDING);
+
+        AuditLog::create([
+            'organization_id' => $user->organization_id,
+            'user_id'         => $user->id,
+            'action'          => 'document.retried',
+            'auditable_type'  => 'document',
+            'auditable_id'    => $document->id,
+            'new_values'      => ['status' => Document::STATUS_PENDING],
+            'metadata'        => [],
+        ]);
+
+        ProcessDocumentJob::dispatch($document);
+
+        return $document->fresh();
+    }
+
     public function downloadUrl(Document $document): ?string
     {
         try {

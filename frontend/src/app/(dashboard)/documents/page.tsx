@@ -3,12 +3,12 @@
 import Link from 'next/link'
 import { useState, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Upload, FileText, Trash2, X } from 'lucide-react'
+import { Upload, FileText, Trash2, X, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/documents/StatusBadge'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { EmptyState } from '@/components/shared/EmptyState'
-import { listDocuments, uploadDocument, deleteDocument } from '@/lib/api/documents'
+import { listDocuments, uploadDocument, deleteDocument, retryDocument } from '@/lib/api/documents'
 import { parseApiError } from '@/lib/errors'
 import { useAuthStore } from '@/stores/authStore'
 import type { Document } from '@/types'
@@ -73,6 +73,11 @@ export default function DocumentsPage() {
     onError: (error) => {
       setDeleteError(parseApiError(error))
     },
+  })
+
+  const retry = useMutation({
+    mutationFn: (id: string) => retryDocument(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['documents'] }),
   })
 
   const documents: Document[] = data?.data ?? []
@@ -160,16 +165,28 @@ export default function DocumentsPage() {
                   <td className="px-4 py-3 text-muted-foreground">{formatBytes(doc.file_size)}</td>
                   <td className="px-4 py-3 text-muted-foreground">{formatDate(doc.created_at)}</td>
                   <td className="px-4 py-3 text-right">
-                    {canDelete && (
-                      <button
-                        onClick={() => remove.mutate(doc.id)}
-                        disabled={remove.isPending}
-                        title="Delete"
-                        className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors ml-auto disabled:opacity-50"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    )}
+                    <div className="flex items-center justify-end gap-1">
+                      {doc.status === 'failed' && (
+                        <button
+                          onClick={(e) => { e.preventDefault(); retry.mutate(doc.id) }}
+                          disabled={retry.isPending && retry.variables === doc.id}
+                          title="Retry processing"
+                          className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-amber-500/10 hover:text-amber-600 transition-colors disabled:opacity-50"
+                        >
+                          <RefreshCw size={14} className={retry.isPending && retry.variables === doc.id ? 'animate-spin' : ''} />
+                        </button>
+                      )}
+                      {canDelete && (
+                        <button
+                          onClick={() => remove.mutate(doc.id)}
+                          disabled={remove.isPending}
+                          title="Delete"
+                          className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors disabled:opacity-50"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
