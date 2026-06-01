@@ -14,4 +14,13 @@ return [
         'model'      => env('GEMINI_MODEL', 'gemini-2.0-flash'),
         'max_tokens' => (int) env('GEMINI_MAX_TOKENS', 4096),
     ],
+
+    'embedding' => [
+        'driver' => env('AI_EMBEDDING_DRIVER', 'gemini'),
+        'gemini' => [
+            'api_key'    => env('GEMINI_API_KEY'),
+            'model'      => env('GEMINI_EMBEDDING_MODEL', 'text-embedding-004'),
+            'dimensions' => 768,
+        ],
+    ],
 ];

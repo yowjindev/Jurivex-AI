@@ -5,6 +5,7 @@ namespace App\Modules\AI\Providers;
 use App\Modules\AI\Analysis\Repositories\Contracts\IDocumentAnalysisRepository;
 use App\Modules\AI\Analysis\Repositories\DocumentAnalysisRepository;
 use App\Modules\AI\Contracts\AIClientContract;
+use App\Modules\AI\Contracts\EmbeddingClientContract;
 use App\Modules\AI\OCR\Events\OCRCompleted;
 use App\Modules\AI\OCR\Events\OCRFailed;
 use App\Modules\AI\OCR\Listeners\LogOCRActivity;
@@ -20,6 +21,7 @@ use App\Modules\AI\Analysis\Listeners\DispatchAIAnalysis;
 use App\Modules\AI\Risk\Listeners\DispatchRiskDetection;
 use App\Modules\AI\Services\ClaudeClient;
 use App\Modules\AI\Services\GeminiClient;
+use App\Modules\AI\Services\GeminiEmbeddingClient;
 use App\Modules\AI\Services\TokenBudgetService;
 use App\Modules\AI\Utilities\TextTruncator;
 use App\Modules\Documents\Events\DocumentAnalysisCompleted;
@@ -66,6 +68,14 @@ class AIServiceProvider extends ServiceProvider
 
         $this->app->singleton(TextTruncator::class);
         $this->app->singleton(TokenBudgetService::class);
+
+        $this->app->singleton(EmbeddingClientContract::class, function () {
+            $cfg = config('ai.embedding.gemini');
+            return new GeminiEmbeddingClient(
+                apiKey: $cfg['api_key'] ?? '',
+                model:  $cfg['model']  ?? 'text-embedding-004',
+            );
+        });
     }
 
     public function boot(): void
